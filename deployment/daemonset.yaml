@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: mixedcpus-plugin-ds
+spec:
+  selector:
+    matchLabels:
+      app: mixedcpus-plugin
+  template:
+    metadata:
+      labels:
+        app: mixedcpus-plugin
+    spec:
+      containers:
+          - name: mixedcpus-plugin
+            image: quay.io/titzhak/mixedcpus
+            imagePullPolicy: Always
+            command:
+              - /bin/mixedcpus
+            args:
+              - --name=mixedcpus
+              - --idx=99
+            resources:
+              requests:
+                cpu: 500m
+                memory: '100M'
+              limits:
+                cpu: 500m
+                memory: '100M'
+            volumeMounts:
+              - mountPath: /var/run/nri.sock
+                name: nri-sock
+      volumes:
+        - name: nri-sock
+          hostPath:
+            path: /var/run/nri.sock
+
