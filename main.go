@@ -3,74 +3,39 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"os"
 
 	"k8s.io/klog"
 
-	"github.com/containerd/nri/pkg/api"
-	"github.com/containerd/nri/pkg/stub"
+	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/mixedcpus"
 )
 
-// our injector plugin
-type plugin struct {
-	stub stub.Stub
-}
+const ProgramName = "mixed-cpu-pool-plugin"
 
 func main() {
-	var (
-		pluginName string
-		pluginIdx  string
-		verbose    bool
-		opts       []stub.Option
-		err        error
-	)
-
-	flag.StringVar(&pluginName, "name", "", "plugin name to register to NRI")
-	flag.StringVar(&pluginIdx, "idx", "", "plugin index to register to NRI")
-	flag.BoolVar(&verbose, "verbose", false, "enable (more) verbose logging")
-	flag.Parse()
-
-	if pluginName != "" {
-		opts = append(opts, stub.WithPluginName(pluginName))
-	}
-	if pluginIdx != "" {
-		opts = append(opts, stub.WithPluginIdx(pluginIdx))
-	}
-
-	p := &plugin{}
-	if p.stub, err = stub.New(p, opts...); err != nil {
-		log.Fatalf("failed to create plugin stub: %v", err)
-	}
-
-	err = p.stub.Run(context.Background())
+	flags := flag.NewFlagSet(ProgramName, flag.ExitOnError)
+	args, err := parseArgs(flags, os.Args[1:]...)
 	if err != nil {
-		klog.Errorf("plugin exited with error %v", err)
-		os.Exit(1)
+		klog.Fatalf("failed to parse arguments %v", err)
 	}
 
-}
-
-// CreateContainer handles container creation requests.
-func (p *plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.ContainerAdjustment, []*api.ContainerUpdate, error) {
-	klog.Infof("Creating container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
-	res := api.ContainerAdjustment{}
-	return &res, nil, nil
-}
-
-func (p *plugin) UpdateContainer(pod *api.PodSandbox, ctr *api.Container) ([]*api.ContainerUpdate, error) {
-	klog.Infof("Updating container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
-	// do nothing but store the original resources
-	// so CRIO code won't crash with nil pointer
-	res := api.ContainerUpdate{
-		//ContainerId: ctr.Id,
-		Linux: &api.LinuxContainerUpdate{
-			Resources: ctr.Linux.Resources,
-		},
+	p, err := mixedcpus.New(args)
+	if err != nil {
+		klog.Fatalf("%v", err)
 	}
-	return []*api.ContainerUpdate{&res}, nil
+
+	err = p.Stub.Run(context.Background())
+	if err != nil {
+		klog.Fatalf("plugin exited with error %v", err)
+	}
 }
 
-func (p *plugin) Configure(config, runtime, version string) (api.EventMask, error) {
+func parseArgs(flags *flag.FlagSet, osArgs ...string) (*mixedcpus.Args, error) {
+	args := &mixedcpus.Args{}
+	flags.StringVar(&args.PluginName, "name", "", "plugin name to register to NRI")
+	flags.StringVar(&args.PluginIdx, "idx", "", "plugin index to register to NRI")
+	flags.StringVar(&args.ReservedCPUs, "reserved-cpus", "", "kubelet reserved cpus list ")
+	klog.InitFlags(flags)
 
+	return args, flags.Parse(osArgs)
 }
