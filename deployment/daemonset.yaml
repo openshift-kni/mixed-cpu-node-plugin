@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: mixedcpus-plugin-ds
+  namespace: mixedcpus-plugin
 spec:
   selector:
     matchLabels:
@@ -11,6 +12,7 @@ spec:
       labels:
         app: mixedcpus-plugin
     spec:
+      serviceAccountName: mixedcpus-plugin
       containers:
           - name: mixedcpus-plugin
             image: quay.io/titzhak/mixedcpus
@@ -20,6 +22,7 @@ spec:
             args:
               - --name=mixedcpus
               - --idx=99
+              - --reserved-cpus=0,2,52,54,4,56
             resources:
               requests:
                 cpu: 500m
@@ -30,6 +33,13 @@ spec:
             volumeMounts:
               - mountPath: /var/run/nri.sock
                 name: nri-sock
+            securityContext:
+              privileged: true
+            env:
+            - name: "NODE_NAME"
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
       volumes:
         - name: nri-sock
           hostPath:
