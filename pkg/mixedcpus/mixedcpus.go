@@ -17,7 +17,6 @@ import (
 	"github.com/opencontainers/runc/libcontainer/cgroups/systemd"
 
 	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/annotations"
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/resourcesstore"
 )
 
 const (
@@ -30,7 +29,6 @@ const (
 type Plugin struct {
 	Stub       stub.Stub
 	MutualCPUs *cpuset.CPUSet
-	cache      *resourcesstore.StateStore
 }
 
 type Args struct {
@@ -74,7 +72,7 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 		return adjustment, updates, nil
 	}
 	glog.Infof("append mutual cpus to container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
-	err := setMutualCPUs(adjustment, ctr, p.MutualCPUs)
+	err := setMutualCPUs(ctr, p.MutualCPUs)
 	if err != nil {
 		return adjustment, updates, fmt.Errorf("CreateContainer: setMutualCPUs failed: %w", err)
 	}
@@ -160,7 +158,7 @@ func (p *Plugin) UpdateContainer(pod *api.PodSandbox, ctr *api.Container) ([]*ap
 	return updates, nil
 }
 
-func setMutualCPUs(adjustment *api.ContainerAdjustment, ctr *api.Container, mutualCPUs *cpuset.CPUSet) error {
+func setMutualCPUs(ctr *api.Container, mutualCPUs *cpuset.CPUSet) error {
 	lspec := ctr.GetLinux()
 	if lspec == nil ||
 		lspec.Resources == nil ||
@@ -176,14 +174,6 @@ func setMutualCPUs(adjustment *api.ContainerAdjustment, ctr *api.Container, mutu
 	}
 
 	ctrCpus.Cpus = curCpus.Union(*mutualCPUs).String()
-	// set an environment variable to
-	// reflect the mutual CPUs
-	//adjustment.Env = []*api.KeyValue{
-	//	{
-	//		Key:   "OPENSHIFT_MUTUAL_CPUS",
-	//		Value: mutualCPUs.String(),
-	//	},
-	//}
 	return nil
 }
 

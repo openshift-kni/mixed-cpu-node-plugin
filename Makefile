@@ -94,14 +94,6 @@ clean-cache:
 	$(Q)$(GO_CMD) clean -cache -testcache
 
 #
-# plugins build targets
-#
-
-#$(BIN_PATH)/mixedcpus: $(wildcard pkg/*.go)
-#	$(Q)echo "Building $@..."; \
-#	cd $(dir $<) && $(GO_BUILD) -o $@ .
-
-#
 # test targets
 #
 
