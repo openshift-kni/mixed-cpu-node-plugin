@@ -25,7 +25,7 @@ const (
 	crioPrefix       = "crio"
 )
 
-// Plugin mixedcpus plugin
+// Plugin nriplugin for mixed cpus
 type Plugin struct {
 	Stub       stub.Stub
 	MutualCPUs *cpuset.CPUSet
