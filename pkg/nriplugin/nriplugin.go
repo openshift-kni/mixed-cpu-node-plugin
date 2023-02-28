@@ -1,4 +1,4 @@
-package mixedcpus
+package nriplugin
 
 import (
 	"fmt"
