@@ -15,24 +15,27 @@ spec:
       serviceAccountName: mixedcpus-plugin
       containers:
           - name: mixedcpus-plugin
-            image: quay.io/titzhak/mixedcpus
+            image: quay.io/titzhak/mixedcpus@sha256:9acc3cfa84866e8a882d3dd418c44eecd32e63ea9444fc58cb90dc37712f0bab
             imagePullPolicy: Always
             command:
               - /bin/mixedcpus
             args:
               - --name=mixedcpus
               - --idx=99
-              - --reserved-cpus=0,2,52,54,4,56
+              - --mutual-cpus=0,56
+              - --v=4
+              - --alsologtostderr
             resources:
-              requests:
-                cpu: 500m
-                memory: '100M'
               limits:
                 cpu: 500m
                 memory: '100M'
             volumeMounts:
-              - mountPath: /var/run/nri.sock
-                name: nri-sock
+              - name: nri-sock
+                mountPath: /var/run/nri.sock
+              - name: deviceplugin-dir
+                mountPath: /var/lib/kubelet/device-plugins
+              - name: deviceplugin-sock
+                mountPath: /var/lib/kubelet/device-plugins/kubelet.sock
             securityContext:
               privileged: true
             env:
@@ -44,4 +47,11 @@ spec:
         - name: nri-sock
           hostPath:
             path: /var/run/nri.sock
+        - name: deviceplugin-dir
+          hostPath:
+            path: /var/lib/kubelet/device-plugins
+        - name: deviceplugin-sock
+          hostPath:
+            path: /var/lib/kubelet/device-plugins/kubelet.sock
+
 
