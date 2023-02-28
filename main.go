@@ -3,39 +3,38 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
-
-	"k8s.io/klog"
-
+	
+	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/deviceplugin"
 	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/mixedcpus"
+	"github.com/golang/glog"
 )
 
-const ProgramName = "mixed-cpu-pool-plugin"
-
 func main() {
-	flags := flag.NewFlagSet(ProgramName, flag.ExitOnError)
-	args, err := parseArgs(flags, os.Args[1:]...)
-	if err != nil {
-		klog.Fatalf("failed to parse arguments %v", err)
-	}
-
+	args := parseArgs()
 	p, err := mixedcpus.New(args)
 	if err != nil {
-		klog.Fatalf("%v", err)
+		glog.Fatalf("%v", err)
 	}
 
-	err = p.Stub.Run(context.Background())
+	go func() {
+		err = p.Stub.Run(context.Background())
+		if err != nil {
+			glog.Fatalf("plugin exited with error %v", err)
+		}
+	}()
+
+	dp, err := deviceplugin.New(args.MutualCPUs)
 	if err != nil {
-		klog.Fatalf("plugin exited with error %v", err)
+		glog.Fatalf("%v", err)
 	}
+	dp.Run()
 }
 
-func parseArgs(flags *flag.FlagSet, osArgs ...string) (*mixedcpus.Args, error) {
+func parseArgs() *mixedcpus.Args {
 	args := &mixedcpus.Args{}
-	flags.StringVar(&args.PluginName, "name", "", "plugin name to register to NRI")
-	flags.StringVar(&args.PluginIdx, "idx", "", "plugin index to register to NRI")
-	flags.StringVar(&args.ReservedCPUs, "reserved-cpus", "", "kubelet reserved cpus list ")
-	klog.InitFlags(flags)
-
-	return args, flags.Parse(osArgs)
+	flag.StringVar(&args.PluginName, "name", "", "plugin name to register to NRI")
+	flag.StringVar(&args.PluginIdx, "idx", "", "plugin index to register to NRI")
+	flag.StringVar(&args.MutualCPUs, "mutual-cpus", "", "mutual cpus list")
+	flag.Parse()
+	return args
 }

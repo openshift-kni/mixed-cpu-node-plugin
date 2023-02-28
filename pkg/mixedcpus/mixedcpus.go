@@ -2,22 +2,22 @@ package mixedcpus
 
 import (
 	"fmt"
-	containerresources "github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/cntrresources"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 
 	"github.com/containerd/nri/pkg/api"
 	"github.com/containerd/nri/pkg/stub"
+	"github.com/golang/glog"
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/cgroups/systemd"
 
 	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/annotations"
+	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/resourcesstore"
 )
 
 const (
@@ -28,21 +28,20 @@ const (
 
 // Plugin mixedcpus plugin
 type Plugin struct {
-	Stub         stub.Stub
-	ReservedCPUs *cpuset.CPUSet
-	ctrStates    map[string]containerresources.State
+	Stub       stub.Stub
+	MutualCPUs *cpuset.CPUSet
+	cache      *resourcesstore.StateStore
 }
 
 type Args struct {
-	PluginName   string
-	PluginIdx    string
-	ReservedCPUs string
+	PluginName string
+	PluginIdx  string
+	MutualCPUs string
 }
 
 func New(args *Args) (*Plugin, error) {
 	p := &Plugin{}
 	var opts []stub.Option
-	p.ctrStates = make(map[string]containerresources.State)
 
 	if args.PluginName != "" {
 		opts = append(opts, stub.WithPluginName(args.PluginName))
@@ -50,15 +49,15 @@ func New(args *Args) (*Plugin, error) {
 	if args.PluginIdx != "" {
 		opts = append(opts, stub.WithPluginIdx(args.PluginIdx))
 	}
-	c, err := cpuset.Parse(args.ReservedCPUs)
+	c, err := cpuset.Parse(args.MutualCPUs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse cpuset %q: %w", args.ReservedCPUs, err)
+		return nil, fmt.Errorf("failed to parse cpuset %q: %w", args.MutualCPUs, err)
 	}
-	if c.Size() <= 4 {
-		return p, fmt.Errorf("reserved CPUs must be more than 4")
+	if c.Size() == 0 {
+		return p, fmt.Errorf("there has to be at least one mutual CPU")
 	}
-	klog.Infof("node %q reserved CPUs: %q", os.ExpandEnv("$NODE_NAME"), c.String())
-	p.ReservedCPUs = &c
+	glog.Infof("node %q mutual CPUs: %q", os.ExpandEnv("$NODE_NAME"), c.String())
+	p.MutualCPUs = &c
 
 	if p.Stub, err = stub.New(p, opts...); err != nil {
 		return nil, fmt.Errorf("failed to create plugin stub: %w", err)
@@ -74,9 +73,10 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 	if !annotations.IsMutualCPUsEnabled(pod.Annotations) {
 		return adjustment, updates, nil
 	}
-	klog.Infof("Append mutual cpus to container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
-	if err := setMutualCPUs(adjustment, ctr, p.ReservedCPUs); err != nil {
-		return adjustment, updates, fmt.Errorf("setMutualCPUs failed: %w", err)
+	glog.Infof("append mutual cpus to container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
+	err := setMutualCPUs(adjustment, ctr, p.MutualCPUs)
+	if err != nil {
+		return adjustment, updates, fmt.Errorf("CreateContainer: setMutualCPUs failed: %w", err)
 	}
 
 	//Adding mutual cpus without increasing cpuQuota,
@@ -88,12 +88,12 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 	//and avoid throttling the process is critical, increasing the cpuQuota to the maximum is the best option.
 	quota, err := calculateCFSQuota(ctr)
 	if err != nil {
-		return adjustment, updates, fmt.Errorf("calculateCFSQuota failed: %w", err)
+		return adjustment, updates, fmt.Errorf("failed to calculate CFS quota: %w", err)
 	}
 
 	cpuMountPoint, err := cgroups.FindCgroupMountpoint(cgroupMountPoint, "cpu")
 	if err != nil {
-		return adjustment, updates, fmt.Errorf("FindCgroupMountpoint failed: %w", err)
+		return adjustment, updates, fmt.Errorf("failed to find cgroup mount point: %w", err)
 	}
 	parentPath := pod.GetLinux().GetCgroupParent()
 	var ctrPath string
@@ -102,7 +102,7 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 	if strings.HasSuffix(parentPath, ".slice") {
 		parentPath, err = systemd.ExpandSlice(parentPath)
 		if err != nil {
-			return adjustment, updates, fmt.Errorf("FindCgroupMountpoint failed: %w", err)
+			return adjustment, updates, err
 		}
 		// TODO this is for systemd. it needs to by dynamic (i.e for cgroupfs)
 		ctrPath = filepath.Join(parentPath, crioPrefix+"-"+ctr.GetId()+".scope")
@@ -110,7 +110,7 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 
 	parentCfsQuotaPath := filepath.Join(cpuMountPoint, parentPath, "cpu.cfs_quota_us")
 	ctrCfsQuotaPath := filepath.Join(cpuMountPoint, ctrPath, "cpu.cfs_quota_us")
-	klog.Infof("Inject hook to modify container's cgroups %q quota to: %d", ctrCfsQuotaPath, quota)
+	glog.Infof("inject hook to modify container's cgroups %q quota to: %d", ctrCfsQuotaPath, quota)
 	hook := &api.Hook{
 		Path: "/bin/bash",
 		Args: []string{
@@ -126,7 +126,7 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 		Resources: ctr.Linux.GetResources(),
 	}
 
-	klog.Infof("adjustment: %+v", adjustment)
+	glog.V(4).Infof("sending adjustment to runtime: %+v", adjustment)
 	return adjustment, updates, nil
 }
 
@@ -135,19 +135,32 @@ func (p *Plugin) UpdateContainer(pod *api.PodSandbox, ctr *api.Container) ([]*ap
 	if !annotations.IsMutualCPUsEnabled(pod.Annotations) {
 		return updates, nil
 	}
-	klog.Infof("Updating container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
-	// do nothing but store the original resources
-	// so CRIO code won't crash with nil pointer
-	//res := api.ContainerUpdate{
-	//	//ContainerId: ctr.Id,
-	//	Linux: &api.LinuxContainerUpdate{
-	//		Resources: ctr.Linux.Resources,
-	//	},
-	//}
+
+	glog.Infof("updating container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
+	curCpus, err := cpuset.Parse(ctr.Linux.Resources.Cpu.Cpus)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse container %q cpuset %w", ctr.Id, err)
+	}
+	// bypass updates coming from CPUManager
+	ctr.Linux.Resources.Cpu.Cpus = curCpus.Union(*p.MutualCPUs).String()
+	quota, err := calculateCFSQuota(ctr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate CFS quota: %w", err)
+	}
+	ctr.Linux.Resources.Cpu.Quota.Value = quota
+
+	res := &api.ContainerUpdate{
+		ContainerId: ctr.Id,
+		Linux: &api.LinuxContainerUpdate{
+			Resources: ctr.Linux.Resources,
+		},
+	}
+	updates = append(updates, res)
+	glog.V(4).Infof("sending update to runtime: %+v", updates)
 	return updates, nil
 }
 
-func setMutualCPUs(adjustment *api.ContainerAdjustment, ctr *api.Container, reservedCPUs *cpuset.CPUSet) error {
+func setMutualCPUs(adjustment *api.ContainerAdjustment, ctr *api.Container, mutualCPUs *cpuset.CPUSet) error {
 	lspec := ctr.GetLinux()
 	if lspec == nil ||
 		lspec.Resources == nil ||
@@ -156,34 +169,21 @@ func setMutualCPUs(adjustment *api.ContainerAdjustment, ctr *api.Container, rese
 		return fmt.Errorf("no cpus found")
 	}
 	ctrCpus := lspec.Resources.Cpu
-	rcpus := reservedCPUs.ToSliceNoSort()
-	var mutualCPUsSlice []int
-	// 4 is the number of cpus that are needed
-	// for housekeeping tasks, hence do not
-	// use them as shared cpus
-	for i := 4; i < reservedCPUs.Size(); i++ {
-		mutualCPUsSlice = append(mutualCPUsSlice, rcpus[i])
-	}
-	if len(mutualCPUsSlice) == 0 {
-		return fmt.Errorf("no mutual cpus found")
-	}
-
-	mutualCPUs := cpuset.NewCPUSet(mutualCPUsSlice...)
 	curCpus, err := cpuset.Parse(ctrCpus.Cpus)
-	klog.Infof("curCpus: %q", curCpus.String())
+	glog.Infof("curCpus: %q", curCpus.String())
 	if err != nil {
 		return err
 	}
 
-	ctrCpus.Cpus = curCpus.Union(mutualCPUs).String()
+	ctrCpus.Cpus = curCpus.Union(*mutualCPUs).String()
 	// set an environment variable to
 	// reflect the mutual CPUs
-	adjustment.Env = []*api.KeyValue{
-		{
-			Key:   "OPENSHIFT_MUTUAL_CPUS",
-			Value: mutualCPUs.String(),
-		},
-	}
+	//adjustment.Env = []*api.KeyValue{
+	//	{
+	//		Key:   "OPENSHIFT_MUTUAL_CPUS",
+	//		Value: mutualCPUs.String(),
+	//	},
+	//}
 	return nil
 }
 
@@ -197,8 +197,6 @@ func calculateCFSQuota(ctr *api.Container) (quota int64, err error) {
 	if err != nil {
 		return
 	}
-
 	quota = (quan.MilliValue() * int64(lspec.Resources.Cpu.Period.Value)) / milliCPUToCPU
-	//lspec.Resources.Cpu.Quota.Value = quota
 	return
 }
