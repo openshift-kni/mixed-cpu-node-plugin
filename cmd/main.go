@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"flag"
-	
+
+	"github.com/golang/glog"
+	"github.com/kubevirt/device-plugin-manager/pkg/dpm"
+
 	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/deviceplugin"
 	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/mixedcpus"
-	"github.com/golang/glog"
 )
 
 func main() {
@@ -16,18 +18,12 @@ func main() {
 		glog.Fatalf("%v", err)
 	}
 
-	go func() {
-		err = p.Stub.Run(context.Background())
-		if err != nil {
-			glog.Fatalf("plugin exited with error %v", err)
-		}
-	}()
-
 	dp, err := deviceplugin.New(args.MutualCPUs)
 	if err != nil {
 		glog.Fatalf("%v", err)
 	}
-	dp.Run()
+
+	execute(p, dp)
 }
 
 func parseArgs() *mixedcpus.Args {
@@ -37,4 +33,15 @@ func parseArgs() *mixedcpus.Args {
 	flag.StringVar(&args.MutualCPUs, "mutual-cpus", "", "mutual cpus list")
 	flag.Parse()
 	return args
+}
+
+func execute(p *mixedcpus.Plugin, dp *dpm.Manager) {
+	go func() {
+		err := p.Stub.Run(context.Background())
+		if err != nil {
+			glog.Fatalf("plugin exited with error %v", err)
+		}
+	}()
+
+	dp.Run()
 }
