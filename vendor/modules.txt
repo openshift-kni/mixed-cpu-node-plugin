@@ -16,15 +16,15 @@ github.com/containerd/nri/pkg/stub
 # github.com/containerd/ttrpc v1.1.1-0.20220420014843-944ef4a40df3
 ## explicit; go 1.13
 github.com/containerd/ttrpc
-# github.com/containers/podman/v4 v4.4.1
-## explicit; go 1.18
-github.com/containers/podman/v4/pkg/env
 # github.com/coreos/go-systemd/v22 v22.5.0
 ## explicit; go 1.12
 github.com/coreos/go-systemd/v22/dbus
 # github.com/cyphar/filepath-securejoin v0.2.3
 ## explicit; go 1.13
 github.com/cyphar/filepath-securejoin
+# github.com/fsnotify/fsnotify v1.6.0
+## explicit; go 1.16
+github.com/fsnotify/fsnotify
 # github.com/go-logr/logr v1.2.3
 ## explicit; go 1.16
 github.com/go-logr/logr
@@ -37,6 +37,9 @@ github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
+# github.com/golang/glog v1.0.0
+## explicit; go 1.11
+github.com/golang/glog
 # github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
 github.com/golang/protobuf/jsonpb
@@ -45,9 +48,18 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/google/gofuzz v1.2.0
+## explicit; go 1.12
+# github.com/kubevirt/device-plugin-manager v1.19.4
+## explicit; go 1.14
+github.com/kubevirt/device-plugin-manager/pkg/dpm
 # github.com/moby/sys/mountinfo v0.6.2
 ## explicit; go 1.16
 github.com/moby/sys/mountinfo
+# github.com/onsi/ginkgo/v2 v2.8.3
+## explicit; go 1.18
+# github.com/onsi/gomega v1.27.0
+## explicit; go 1.18
 # github.com/opencontainers/runc v1.1.4
 ## explicit; go 1.16
 github.com/opencontainers/runc/libcontainer/cgroups
@@ -66,23 +78,28 @@ github.com/opencontainers/runc/libcontainer/utils
 # github.com/opencontainers/runtime-spec v1.0.3-0.20220825212826-86290f6a00fb
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
+# github.com/seccomp/libseccomp-golang v0.10.0
+## explicit; go 1.14
 # github.com/sirupsen/logrus v1.9.0
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# golang.org/x/net v0.5.0
+# github.com/stretchr/testify v1.8.1
+## explicit; go 1.13
+# golang.org/x/net v0.7.0
 ## explicit; go 1.17
+golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sys v0.4.0
+# golang.org/x/sys v0.5.0
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.6.0
+# golang.org/x/text v0.7.0
 ## explicit; go 1.17
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
@@ -187,7 +204,7 @@ k8s.io/cri-api/pkg/apis/runtime/v1
 # k8s.io/klog v1.0.0
 ## explicit; go 1.12
 k8s.io/klog
-# k8s.io/klog/v2 v2.90.0
+# k8s.io/klog/v2 v2.80.1
 ## explicit; go 1.13
 k8s.io/klog/v2
 k8s.io/klog/v2/internal/buffer
@@ -195,6 +212,35 @@ k8s.io/klog/v2/internal/clock
 k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
-# k8s.io/kubernetes v1.26.1
+# k8s.io/kubelet v0.26.0 => k8s.io/kubelet v0.26.0
+## explicit; go 1.19
+k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
+# k8s.io/kubernetes v1.15.0-alpha.0 => k8s.io/kubernetes v1.26.1
 ## explicit; go 1.19
 k8s.io/kubernetes/pkg/kubelet/cm/cpuset
+# k8s.io/api => k8s.io/api v0.26.0
+# k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.26.0
+# k8s.io/apiserver => k8s.io/apiserver v0.26.0
+# k8s.io/cli-runtime => k8s.io/cli-runtime v0.26.0
+# k8s.io/client-go => k8s.io/client-go v0.26.0
+# k8s.io/cloud-provider => k8s.io/cloud-provider v0.26.0
+# k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.26.0
+# k8s.io/code-generator => k8s.io/code-generator v0.26.0
+# k8s.io/component-base => k8s.io/component-base v0.26.0
+# k8s.io/component-helpers => k8s.io/component-helpers v0.26.0
+# k8s.io/controller-manager => k8s.io/controller-manager v0.26.0
+# k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.26.0
+# k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.26.0
+# k8s.io/kms => k8s.io/kms v0.26.0
+# k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.26.0
+# k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.26.0
+# k8s.io/kube-proxy => k8s.io/kube-proxy v0.26.0
+# k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.26.0
+# k8s.io/kubectl => k8s.io/kubectl v0.26.0
+# k8s.io/kubelet => k8s.io/kubelet v0.26.0
+# k8s.io/kubernetes => k8s.io/kubernetes v1.26.1
+# k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.26.0
+# k8s.io/metrics => k8s.io/metrics v0.26.0
+# k8s.io/mount-utils => k8s.io/mount-utils v0.26.0
+# k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.26.0
+# k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.26.0
