@@ -1,0 +1,37 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+kubeadmConfigPatches:
+- |
+  apiVersion: kubelet.config.k8s.io/v1beta1
+  kind: KubeletConfiguration
+  cpuManagerPolicy: "static"
+  topologyManagerPolicy: "single-numa-node"
+  reservedSystemCPUs: "0,1"
+  memoryManagerPolicy: "Static"
+  evictionHard:
+    memory.available: "100Mi"
+  reservedMemory:
+   - numaNode: 0
+     limits:
+      memory: "612Mi"
+  systemReserved:
+    memory: "256Mi"
+  kubeReserved:
+    memory: "256Mi"
+- |
+  apiVersion: kubeadm.k8s.io/v1beta3
+  kind: InitConfiguration
+  nodeRegistration:
+    criSocket: "/var/run/crio/crio.sock"
+- |
+  apiVersion: kubeadm.k8s.io/v1beta3
+  kind: JoinConfiguration
+  nodeRegistration:
+     criSocket: "/var/run/crio/crio.sock"
+nodes:
+  - role: control-plane
+    image: quay.io/titzhak/kind_crio@sha256:903bee6832a5f98f4602016864a7107f62ef421c343a8c47893e54772cc0e038
+  - role: worker
+    image: quay.io/titzhak/kind_crio@sha256:903bee6832a5f98f4602016864a7107f62ef421c343a8c47893e54772cc0e038
+  - role: worker
+    image: quay.io/titzhak/kind_crio@sha256:903bee6832a5f98f4602016864a7107f62ef421c343a8c47893e54772cc0e038

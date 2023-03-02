@@ -78,7 +78,7 @@ mkdir:
 	mkdir -p build/bin || true
 
 build-plugin: mkdir
-	$(GO_BUILD) -o $(PLUGIN)
+	$(GO_BUILD) -o $(PLUGIN) ./cmd/main.go
 
 build-check:
 	$(Q)$(GO_BUILD) -v $(GO_MODULES)
@@ -183,3 +183,6 @@ deploy:
 undeploy:
 	@echo "Removing test application"
 	$(CLIENT) delete -f deployment/00-namespace.yaml
+
+test-unit:
+	$(GO_CMD) test -v ./...
