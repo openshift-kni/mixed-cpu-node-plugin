@@ -48,20 +48,6 @@ func MakeMutualCpusDevices(cpus *cpuset.CPUSet) []*pluginapi.Device {
 		dev := &pluginapi.Device{
 			ID:     strconv.Itoa(cpuSlice[i]),
 			Health: pluginapi.Healthy,
-			Topology: &pluginapi.TopologyInfo{
-				// we need to populate the with all available NUMA ids
-				// otherwise if Kubelet configured with single-numa-node TM policy
-				// it will reject the pod
-				// TODO fill the NUMA nodes according to the actual HW (on VM for example we should have ID 0 only)
-				Nodes: []*pluginapi.NUMANode{
-					{
-						ID: 0,
-					},
-					{
-						ID: 1,
-					},
-				},
-			},
 		}
 		devs = append(devs, dev)
 	}
