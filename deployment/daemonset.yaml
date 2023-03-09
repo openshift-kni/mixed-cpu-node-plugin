@@ -36,8 +36,6 @@ spec:
                 mountPath: /var/lib/kubelet/device-plugins
               - name: deviceplugin-sock
                 mountPath: /var/lib/kubelet/device-plugins/kubelet.sock
-            securityContext:
-              privileged: true
             env:
             - name: "NODE_NAME"
               valueFrom:
@@ -46,12 +44,14 @@ spec:
       volumes:
         - name: nri-sock
           hostPath:
-            path: /var/run/nri.sock
+            path: /var/run/nri/nri.sock
+            type: Socket
         - name: deviceplugin-dir
           hostPath:
             path: /var/lib/kubelet/device-plugins
         - name: deviceplugin-sock
           hostPath:
             path: /var/lib/kubelet/device-plugins/kubelet.sock
+            type: Socket
 
 
