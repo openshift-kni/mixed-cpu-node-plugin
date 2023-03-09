@@ -5,7 +5,6 @@ go 1.19
 require (
 	github.com/containerd/nri v0.2.0
 	github.com/golang/glog v1.0.0
-	github.com/google/go-cmp v0.5.9
 	github.com/kubevirt/device-plugin-manager v1.19.4
 	github.com/opencontainers/runc v1.1.4
 	google.golang.org/grpc v1.51.0
@@ -76,3 +75,5 @@ replace (
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.26.0
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.26.0
 )
+
+replace github.com/containerd/nri => github.com/containerd/nri v0.3.0

@@ -186,3 +186,6 @@ undeploy:
 
 test-unit:
 	$(GO_CMD) test -v ./...
+
+deps-update:
+	$(GO_CMD) mod tidy && $(GO_CMD) mod vendor

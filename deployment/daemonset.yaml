@@ -31,7 +31,7 @@ spec:
                 memory: '100M'
             volumeMounts:
               - name: nri-sock
-                mountPath: /var/run/nri.sock
+                mountPath: /var/run/nri/nri.sock
               - name: deviceplugin-dir
                 mountPath: /var/lib/kubelet/device-plugins
               - name: deviceplugin-sock

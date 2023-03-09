@@ -72,8 +72,8 @@ github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWH
 github.com/cncf/xds/go v0.0.0-20211001041855-01bcc9b48dfe/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/containerd/console v1.0.3/go.mod h1:7LqA/THxQ86k76b8c/EMSiaJ3h1eZkMkXar0TQ1gf3U=
-github.com/containerd/nri v0.2.0 h1:gSHG+SyKvWp5xJxyXbx2miR0ajssuOImr52Z2lt/GKI=
-github.com/containerd/nri v0.2.0/go.mod h1:Q2u9Sudol4IkJ6YK0gShznKMxM6Un0Y3O4Wslf5Nerg=
+github.com/containerd/nri v0.3.0 h1:2ZM4WImye1ypSnE7COjOvPAiLv84kaPILBDvb1tbDK8=
+github.com/containerd/nri v0.3.0/go.mod h1:Zw9q2lP16sdg0zYybemZ9yTDy8g7fPCIB3KXOGlggXI=
 github.com/containerd/ttrpc v1.1.1-0.20220420014843-944ef4a40df3 h1:BhCp66ofL8oYcdelc3CBXc2/Pfvvgx+s+mrp9TvNgn8=
 github.com/containerd/ttrpc v1.1.1-0.20220420014843-944ef4a40df3/go.mod h1:YYyNVhZrTMiaf51Vj6WhAJqJw+vl/nzABhj8pWrzle4=
 github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
