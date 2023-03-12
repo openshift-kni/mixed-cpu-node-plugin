@@ -10,13 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 
+	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/deviceplugin"
 	"github.com/containerd/nri/pkg/api"
 	"github.com/containerd/nri/pkg/stub"
 	"github.com/golang/glog"
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/cgroups/systemd"
-
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/annotations"
 )
 
 const (
@@ -68,7 +67,7 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 	adjustment := &api.ContainerAdjustment{}
 	updates := []*api.ContainerUpdate{}
 
-	if !annotations.IsMutualCPUsEnabled(pod.Annotations) {
+	if !deviceplugin.Requested(ctr) {
 		return adjustment, updates, nil
 	}
 	glog.Infof("append mutual cpus to container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
@@ -130,7 +129,15 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 
 func (p *Plugin) UpdateContainer(pod *api.PodSandbox, ctr *api.Container) ([]*api.ContainerUpdate, error) {
 	updates := []*api.ContainerUpdate{}
-	if !annotations.IsMutualCPUsEnabled(pod.Annotations) {
+	if !deviceplugin.Requested(ctr) {
+		// A hack in order to keep CRI-O from crashing
+		// issue: https://github.com/cri-o/cri-o/issues/6642
+		updates = append(updates, &api.ContainerUpdate{
+			ContainerId: ctr.Id,
+			Linux: &api.LinuxContainerUpdate{
+				Resources: ctr.Linux.Resources,
+			},
+		})
 		return updates, nil
 	}
 
