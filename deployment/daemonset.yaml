@@ -3,6 +3,8 @@ kind: DaemonSet
 metadata:
   name: mixedcpus-plugin-ds
   namespace: mixedcpus-plugin
+  labels:
+    app: mixedcpus-plugin
 spec:
   selector:
     matchLabels:

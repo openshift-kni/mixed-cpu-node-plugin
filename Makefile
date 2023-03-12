@@ -46,7 +46,7 @@ RUNTIME ?= docker
 REPOOWNER ?= titzhak
 IMAGENAME ?= mixedcpus
 IMAGETAG ?= latest
-PLUGIN_CONTAINER_IMAGE ?= quay.io/${REPOOWNER}/${IMAGENAME}:${IMAGETAG}
+MIXED_CPUS_CONTAINER_IMAGE ?= quay.io/${REPOOWNER}/${IMAGENAME}:${IMAGETAG}
 
 CLIENT ?= oc
 
@@ -163,12 +163,12 @@ install-ginkgo:
 .PHONY: image
 image: all
 	@echo "building image"
-	$(RUNTIME) build -t $(PLUGIN_CONTAINER_IMAGE) .
+	$(RUNTIME) build -t $(MIXED_CPUS_CONTAINER_IMAGE) .
 
 .PHONY: push
 push: image
 	@echo "pushing image"
-	$(RUNTIME) push $(PLUGIN_CONTAINER_IMAGE)
+	$(RUNTIME) push $(MIXED_CPUS_CONTAINER_IMAGE)
 
 #
 # targets for deployment
@@ -189,3 +189,6 @@ test-unit:
 
 deps-update:
 	$(GO_CMD) mod tidy && $(GO_CMD) mod vendor
+
+e2e-wait-for-ds:
+	hack/wait-for-ds.sh

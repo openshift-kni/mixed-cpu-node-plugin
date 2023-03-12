@@ -1,0 +1,70 @@
+name: CI E2E
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  e2e-ic:
+    runs-on: ubuntu-22.10
+    env:
+      MIXED_CPUS_CONTAINER_IMAGE: quay.io/titzhak/mixedcpus:ci
+      RUNTIME: docker
+
+    steps:
+      - name: checkout sources
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: setup golang
+        uses: actions/setup-go@v2
+        id: go
+        with:
+          go-version: 1.19.3
+
+      - name: show tool versions
+        run: |
+          go version
+          kind version
+
+#      - name: build test binary
+#        run: |
+#          make build-e2e
+
+      - name: build image
+        run: |
+          MIXED_CPUS_CONTAINER_IMAGE=${MIXED_CPUS_CONTAINER_IMAGE} RUNTIME=${RUNTIME} make image
+
+      - name: create K8S kind cluster
+        run: |
+          # kind is part of 20.04 image, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md
+          # kind image used for this setup is under the config.yaml file
+          kind create cluster --config=test/kind/config.yaml
+          kind load docker-image ${MIXED_CPUS_CONTAINER_IMAGE}
+
+      - name: label worker
+        run: |
+          kubectl label node kind-worker kind-worker2 node-role.kubernetes.io/worker=""
+
+      - name: deploy mixed-cpus plugin
+        run: |
+          make deploy
+
+      - name: wait for daemonset to be ready
+        run: |
+          make e2e-wait-for-ds
+
+      - name: setup-info
+        run: |
+          kubectl describe -l app=mixedcpus-plugin daemonsets || :
+          kubectl describe nodes || :
+
+#      - name: run e2e test
+#        run: |
+#          make e2e-test
