@@ -11,7 +11,7 @@ defaults:
 
 jobs:
   e2e-ic:
-    runs-on: ubuntu-22.10
+    runs-on: ubuntu-22.04
     env:
       MIXED_CPUS_CONTAINER_IMAGE: quay.io/titzhak/mixedcpus:ci
       RUNTIME: docker
