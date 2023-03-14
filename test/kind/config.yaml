@@ -30,8 +30,8 @@ kubeadmConfigPatches:
      criSocket: "unix:///var/run/crio/crio.sock"
 nodes:
   - role: control-plane
-    image: quay.io/titzhak/kind_crio@sha256:903bee6832a5f98f4602016864a7107f62ef421c343a8c47893e54772cc0e038
+    image: quay.io/titzhak/kind_crio@sha256:de8249ff37cbbab4da67c713671bb41cc3be029daf920b662464c85728ed4bf4
   - role: worker
-    image: quay.io/titzhak/kind_crio@sha256:903bee6832a5f98f4602016864a7107f62ef421c343a8c47893e54772cc0e038
+    image: quay.io/titzhak/kind_crio@sha256:de8249ff37cbbab4da67c713671bb41cc3be029daf920b662464c85728ed4bf4
   - role: worker
-    image: quay.io/titzhak/kind_crio@sha256:903bee6832a5f98f4602016864a7107f62ef421c343a8c47893e54772cc0e038
+    image: quay.io/titzhak/kind_crio@sha256:de8249ff37cbbab4da67c713671bb41cc3be029daf920b662464c85728ed4bf4

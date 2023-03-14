@@ -11,6 +11,5 @@ RUN echo "Installing crio ..." \
     && rm -rf /etc/crictl.yaml \
     #  delete crun configuration it doesn't work in kind setup and needs to be investigated
     && rm -f /etc/crio/crio.conf.d/10-crun.conf \
-
 # do not disable containerd becasue it's needed for kind load docker-image command
-RUN systemctl enable crio
+    && systemctl enable crio
