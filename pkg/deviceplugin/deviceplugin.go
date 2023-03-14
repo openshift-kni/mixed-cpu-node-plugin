@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	mutualcpuResourceNamespace = "openshift.io"
-	mutualcpuResourceName      = "mutualcpu"
+	MutualCPUResourceNamespace = "openshift.io"
+	MutualCPUResourceName      = "mutualcpu"
+	MutualCPUDeviceName        = MutualCPUResourceNamespace + "/" + MutualCPUResourceName
 )
 
 type MutualCpu struct {
@@ -20,11 +21,11 @@ type MutualCpu struct {
 }
 
 func (mc *MutualCpu) GetResourceNamespace() string {
-	return mutualcpuResourceNamespace
+	return MutualCPUResourceNamespace
 }
 
 func (mc *MutualCpu) Discover(pnl chan dpm.PluginNameList) {
-	pnl <- []string{mutualcpuResourceName}
+	pnl <- []string{MutualCPUResourceName}
 	return
 }
 
@@ -64,7 +65,7 @@ func Requested(ctr *api.Container) bool {
 	}
 
 	for _, dev := range ctr.Linux.Resources.Devices {
-		if dev.Type == mutualcpuResourceNamespace+"/"+mutualcpuResourceName {
+		if dev.Type == MutualCPUResourceNamespace+"/"+MutualCPUResourceName {
 			return true
 		}
 	}
