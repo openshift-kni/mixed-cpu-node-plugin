@@ -24,7 +24,7 @@ spec:
             args:
               - --name=mixedcpus
               - --idx=99
-              - --mutual-cpus=0,56
+              - --mutual-cpus=0
               - --v=4
               - --alsologtostderr
             resources:
