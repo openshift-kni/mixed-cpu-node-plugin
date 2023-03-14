@@ -55,19 +55,3 @@ func MakeMutualCpusDevices(cpus *cpuset.CPUSet) []*pluginapi.Device {
 	}
 	return devs
 }
-
-// Requested checks whether a given container is requesting the device
-func Requested(ctr *api.Container) bool {
-	if ctr.Linux == nil ||
-		ctr.Linux.Resources == nil ||
-		ctr.Linux.Resources.Devices == nil {
-		return false
-	}
-
-	for _, dev := range ctr.Linux.Resources.Devices {
-		if dev.Type == MutualCPUResourceNamespace+"/"+MutualCPUResourceName {
-			return true
-		}
-	}
-	return false
-}
