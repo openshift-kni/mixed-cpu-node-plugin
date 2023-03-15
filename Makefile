@@ -28,7 +28,7 @@ GO_LINT    := golint -set_exit_status
 GO_FMT     := gofmt
 GO_VET     := $(GO_CMD) vet
 
-GO_MODULES := $(shell $(GO_CMD) list ./...)
+GO_MODULES := $(shell $(GO_CMD) list ./pkg/...)
 
 GOLANG_CILINT := golangci-lint
 GINKGO        := ginkgo
@@ -192,3 +192,9 @@ deps-update:
 
 e2e-wait-for-ds:
 	hack/wait-for-ds.sh
+
+build-e2e:
+	$(GO_CMD) test -c -o build/bin/e2e_test test/e2e/*.go
+
+e2e-test: build-e2e
+	hack/e2e-run-test.sh $(E2E_SHARED_CPUS)
