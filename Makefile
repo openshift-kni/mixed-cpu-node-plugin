@@ -176,12 +176,10 @@ push: image
 
 .PHONY: deploy
 deploy:
-	@echo "Deploying test application"
 	$(CLIENT) apply -f deployment/
 
 .PHONY: undeploy
 undeploy:
-	@echo "Removing test application"
 	$(CLIENT) delete -f deployment/00-namespace.yaml
 
 test-unit:
