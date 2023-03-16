@@ -15,6 +15,7 @@ jobs:
     env:
       MIXED_CPUS_CONTAINER_IMAGE: quay.io/titzhak/mixedcpus:ci
       RUNTIME: docker
+      E2E_SHARED_CPUS: 0
 
     steps:
       - name: checkout sources
@@ -48,7 +49,7 @@ jobs:
           kind create cluster --config=test/kind/config.yaml
           kind load docker-image ${MIXED_CPUS_CONTAINER_IMAGE}
 
-      - name: label worker
+      - name: label workers
         run: |
           kubectl label node kind-worker kind-worker2 node-role.kubernetes.io/worker=""
 
