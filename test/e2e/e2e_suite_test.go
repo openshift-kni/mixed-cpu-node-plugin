@@ -61,6 +61,12 @@ func createNamespace(prefix string) error {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: prefix,
+			Labels: map[string]string{
+				"security.openshift.io/scc.podSecurityLabelSync": "false",
+				"pod-security.kubernetes.io/audit":               "privileged",
+				"pod-security.kubernetes.io/enforce":             "privileged",
+				"pod-security.kubernetes.io/warn":                "privileged",
+			},
 		},
 	}
 	if err := fixture.Cli.Create(context.TODO(), ns); err != nil {
