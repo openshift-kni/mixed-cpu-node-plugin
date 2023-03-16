@@ -13,3 +13,5 @@ This way standardize the way of how container workloads should asks for mutual c
  - Unit Tests - TODO
  - E2E Tests - TODO
  - Support cgroupfs - TODO
+
+![](/home/titzhak/go/code/github.com/Tal-or/nri-mixed-cpu-pools-plugin/docs/MixedCPUSWorkloadsFlow.png)
