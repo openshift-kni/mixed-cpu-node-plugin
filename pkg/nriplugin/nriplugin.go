@@ -2,26 +2,20 @@ package nriplugin
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
-
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
+	"os"
+	"strconv"
 
+	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/cgroups"
 	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/deviceplugin"
 	"github.com/containerd/nri/pkg/api"
 	"github.com/containerd/nri/pkg/stub"
 	"github.com/golang/glog"
-	"github.com/opencontainers/runc/libcontainer/cgroups"
-	"github.com/opencontainers/runc/libcontainer/cgroups/systemd"
 )
 
 const (
-	milliCPUToCPU    = 1000
-	cgroupMountPoint = "/sys/fs/cgroup"
-	crioPrefix       = "crio"
+	milliCPUToCPU = 1000
 )
 
 // Plugin nriplugin for mixed cpus
@@ -70,8 +64,9 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 	if !deviceplugin.Requested(ctr) {
 		return adjustment, updates, nil
 	}
-	glog.Infof("append mutual cpus to container %s/%s/%s...", pod.GetNamespace(), pod.GetName(), ctr.GetName())
-	err := setMutualCPUs(ctr, p.MutualCPUs)
+	uniqueName := getCtrUniqueName(pod, ctr)
+	glog.Infof("append mutual cpus to container %q", uniqueName)
+	err := setMutualCPUs(ctr, p.MutualCPUs, uniqueName)
 	if err != nil {
 		return adjustment, updates, fmt.Errorf("CreateContainer: setMutualCPUs failed: %w", err)
 	}
@@ -88,25 +83,16 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 		return adjustment, updates, fmt.Errorf("failed to calculate CFS quota: %w", err)
 	}
 
-	cpuMountPoint, err := cgroups.FindCgroupMountpoint(cgroupMountPoint, "cpu")
+	parentCfsQuotaPath, err := cgroups.Adapter.GetCFSQuotaPath(pod.GetLinux().GetCgroupParent())
 	if err != nil {
-		return adjustment, updates, fmt.Errorf("failed to find cgroup mount point: %w", err)
-	}
-	parentPath := pod.GetLinux().GetCgroupParent()
-	var ctrPath string
-
-	// systemd fs, otherwise cgroupfs
-	if strings.HasSuffix(parentPath, ".slice") {
-		parentPath, err = systemd.ExpandSlice(parentPath)
-		if err != nil {
-			return adjustment, updates, err
-		}
-		// TODO this is for systemd. it needs to by dynamic (i.e for cgroupfs)
-		ctrPath = filepath.Join(parentPath, crioPrefix+"-"+ctr.GetId()+".scope")
+		return adjustment, updates, fmt.Errorf("failed to find parent cfs quota: %w", err)
 	}
 
-	parentCfsQuotaPath := filepath.Join(cpuMountPoint, parentPath, "cpu.cfs_quota_us")
-	ctrCfsQuotaPath := filepath.Join(cpuMountPoint, ctrPath, "cpu.cfs_quota_us")
+	ctrCfsQuotaPath, err := cgroups.Adapter.GetCrioContainerControllerPath(pod.GetLinux().GetCgroupParent(), ctr.GetId())
+	if err != nil {
+		return adjustment, updates, fmt.Errorf("failed to find parent cfs quota: %w", err)
+	}
+
 	glog.Infof("inject hook to modify container's cgroups %q quota to: %d", ctrCfsQuotaPath, quota)
 	hook := &api.Hook{
 		Path: "/bin/bash",
@@ -165,7 +151,7 @@ func (p *Plugin) UpdateContainer(pod *api.PodSandbox, ctr *api.Container) ([]*ap
 	return updates, nil
 }
 
-func setMutualCPUs(ctr *api.Container, mutualCPUs *cpuset.CPUSet) error {
+func setMutualCPUs(ctr *api.Container, mutualCPUs *cpuset.CPUSet, uniqueName string) error {
 	lspec := ctr.GetLinux()
 	if lspec == nil ||
 		lspec.Resources == nil ||
@@ -175,12 +161,13 @@ func setMutualCPUs(ctr *api.Container, mutualCPUs *cpuset.CPUSet) error {
 	}
 	ctrCpus := lspec.Resources.Cpu
 	curCpus, err := cpuset.Parse(ctrCpus.Cpus)
-	glog.Infof("curCpus: %q", curCpus.String())
+	glog.V(4).Infof("container %q cpus ids before applying mutual cpus %q", uniqueName, curCpus.String())
 	if err != nil {
 		return err
 	}
 
 	ctrCpus.Cpus = curCpus.Union(*mutualCPUs).String()
+	glog.V(4).Infof("container %q cpus ids after applying mutual cpus %q", uniqueName, ctrCpus.Cpus)
 	return nil
 }
 
@@ -196,4 +183,8 @@ func calculateCFSQuota(ctr *api.Container) (quota int64, err error) {
 	}
 	quota = (quan.MilliValue() * int64(lspec.Resources.Cpu.Period.Value)) / milliCPUToCPU
 	return
+}
+
+func getCtrUniqueName(pod *api.PodSandbox, ctr *api.Container) string {
+	return fmt.Sprintf("%s/%s/%s", pod.GetNamespace(), pod.GetName(), ctr.GetName())
 }
