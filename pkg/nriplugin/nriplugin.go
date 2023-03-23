@@ -88,7 +88,7 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 		return adjustment, updates, fmt.Errorf("failed to find parent cfs quota: %w", err)
 	}
 
-	ctrCfsQuotaPath, err := cgroups.Adapter.GetCrioContainerControllerPath(pod.GetLinux().GetCgroupParent(), ctr.GetId())
+	ctrCfsQuotaPath, err := cgroups.Adapter.GetCrioContainerCFSQuotaPath(pod.GetLinux().GetCgroupParent(), ctr.GetId())
 	if err != nil {
 		return adjustment, updates, fmt.Errorf("failed to find parent cfs quota: %w", err)
 	}
