@@ -68,7 +68,7 @@ var _ = Describe("Mixedcpus", func() {
 
 			By(fmt.Sprintf("checking if shared CPUs ids %s are presented under pod %s/%s", sharedCpus, pod.Namespace, pod.Name))
 			intersect := cpus.Intersection(sharedCpusSet)
-			Expect(intersect.Equals(sharedCpusSet)).To(BeTrue(), "shared cpus ids: %s, are not present under pod: %v", sharedCpusSet.String(), fmt.Sprintf("%s/%s", pod.Namespace, pod.Name))
+			Expect(intersect.Equals(sharedCpusSet)).To(BeTrue(), "shared cpu ids: %s, are not presented. pod: %v cpu ids are: %s", sharedCpusSet.String(), fmt.Sprintf("%s/%s", pod.Namespace, pod.Name), cpus.String())
 		})
 	})
 })

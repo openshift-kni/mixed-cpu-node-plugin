@@ -47,6 +47,15 @@ func Make(name, namespace string, opts ...Options) *corev1.Pod {
 	return p
 }
 
+func WithLabels(labels map[string]string) func(pod *corev1.Pod) {
+	return func(pod *corev1.Pod) {
+		for k, v := range pod.Labels {
+			labels[k] = v
+		}
+		pod.Labels = labels
+	}
+}
+
 func WithRequests(list corev1.ResourceList, ids ...int) func(pod *corev1.Pod) {
 	if ids == nil {
 		ids = append(ids, 0)
