@@ -183,7 +183,7 @@ undeploy:
 	$(CLIENT) delete -f deployment/00-namespace.yaml
 
 test-unit:
-	$(GO_CMD) test -v ./...
+	$(GO_CMD) test -v ./pkg/...
 
 deps-update:
 	$(GO_CMD) mod tidy && $(GO_CMD) mod vendor
