@@ -49,6 +49,7 @@ IMAGETAG ?= latest
 MIXED_CPUS_CONTAINER_IMAGE ?= quay.io/${REPOOWNER}/${IMAGENAME}:${IMAGETAG}
 
 CLIENT ?= oc
+KUSTOMIZE_DEPLOY_DIR ?= default
 
 ifneq ($(V),1)
   Q := @
@@ -176,11 +177,13 @@ push: image
 
 .PHONY: deploy
 deploy:
-	$(CLIENT) apply -f deployment/
+	@echo "Deploying mixed-cpus plugin"
+	$(CLIENT) apply -k deployment/overlays/$(KUSTOMIZE_DEPLOY_DIR)
 
 .PHONY: undeploy
 undeploy:
-	$(CLIENT) delete -f deployment/00-namespace.yaml
+	@echo "Deleting mixed-cpus plugin"
+	$(CLIENT) delete -k deployment/overlays/$(KUSTOMIZE_DEPLOY_DIR)
 
 test-unit:
 	$(GO_CMD) test -v ./pkg/...
