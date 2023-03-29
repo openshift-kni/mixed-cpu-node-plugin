@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: mixedcpus-plugin-ds
+spec:
+  selector:
+    matchLabels:
+      app: mixedcpus-plugin
+  template:
+    spec:
+      containers:
+        - name: mixedcpus-plugin
+          # TODO make it more restrict
+          securityContext:
+            privileged: true
