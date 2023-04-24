@@ -12,6 +12,7 @@ This way standardize the way of how container workloads should asks for mutual c
  - Handle reboot/restart node/kubelet/crio/pod flow - DONE
  - Unit Tests - TODO
  - E2E Tests - TODO
- - Support cgroupfs - TODO
+ - Support cgroupfs - TODO 
+ - Support cgroupv2 - DONE
 
 ![](docs/MixedCPUSWorkloadsFlow.png)
