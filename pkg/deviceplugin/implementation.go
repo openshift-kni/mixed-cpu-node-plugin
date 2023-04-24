@@ -17,7 +17,7 @@ type pluginImp struct {
 }
 
 func (p pluginImp) ListAndWatch(empty *pluginapi.Empty, server pluginapi.DevicePlugin_ListAndWatchServer) error {
-	devs := MakeMutualCpusDevices(p.mutualCpus)
+	devs := MakeMutualCpusDevices()
 	glog.V(4).Infof("ListAndWatch respond with: %+v", devs)
 	if err := server.Send(&pluginapi.ListAndWatchResponse{Devices: devs}); err != nil {
 		return err

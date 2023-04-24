@@ -17,6 +17,8 @@ const (
 	MutualCPUResourceName      = "mutualcpu"
 	MutualCPUDeviceName        = MutualCPUResourceNamespace + "/" + MutualCPUResourceName
 	EnvVarName                 = "OPENSHIFT_MUTUAL_CPUS"
+	// TODO is this number big enough?
+	DefaultDevicesNumber = 99
 )
 
 type MutualCpu struct {
@@ -45,13 +47,12 @@ func New(cpus string) (*dpm.Manager, error) {
 	return dpm.NewManager(mc), nil
 }
 
-func MakeMutualCpusDevices(cpus *cpuset.CPUSet) []*pluginapi.Device {
+func MakeMutualCpusDevices() []*pluginapi.Device {
 	var devs []*pluginapi.Device
-	cpuSlice := cpus.ToSlice()
 
-	for i := 0; i < cpus.Size(); i++ {
+	for i := 0; i < DefaultDevicesNumber; i++ {
 		dev := &pluginapi.Device{
-			ID:     strconv.Itoa(cpuSlice[i]),
+			ID:     strconv.Itoa(i),
 			Health: pluginapi.Healthy,
 		}
 		devs = append(devs, dev)
