@@ -178,12 +178,12 @@ push: image
 .PHONY: deploy
 deploy:
 	@echo "Deploying mixed-cpus plugin"
-	$(CLIENT) apply -k deployment/overlays/$(KUSTOMIZE_DEPLOY_DIR)
+	$(CLIENT) apply -k deployment/kustomize/overlays/$(KUSTOMIZE_DEPLOY_DIR)
 
 .PHONY: undeploy
 undeploy:
 	@echo "Deleting mixed-cpus plugin"
-	$(CLIENT) delete -k deployment/overlays/$(KUSTOMIZE_DEPLOY_DIR)
+	$(CLIENT) delete -k deployment/kustomize/overlays/$(KUSTOMIZE_DEPLOY_DIR)
 
 test-unit:
 	$(GO_CMD) test -v ./pkg/...
