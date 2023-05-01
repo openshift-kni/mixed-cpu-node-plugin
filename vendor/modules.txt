@@ -223,6 +223,9 @@ github.com/opencontainers/runc/libcontainer/utils
 # github.com/opencontainers/runtime-spec v1.0.3-0.20220825212826-86290f6a00fb
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
+# github.com/openshift/api v3.9.0+incompatible
+## explicit
+github.com/openshift/api/security/v1
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors

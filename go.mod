@@ -10,6 +10,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.8.3
 	github.com/onsi/gomega v1.27.0
 	github.com/opencontainers/runc v1.1.4
+	github.com/openshift/api v3.9.0+incompatible
 	google.golang.org/grpc v1.51.0
 	k8s.io/api v0.26.1
 	k8s.io/client-go v0.26.1
