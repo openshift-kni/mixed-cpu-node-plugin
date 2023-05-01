@@ -31,7 +31,6 @@ func (mc *MutualCpu) GetResourceNamespace() string {
 
 func (mc *MutualCpu) Discover(pnl chan dpm.PluginNameList) {
 	pnl <- []string{MutualCPUResourceName}
-	return
 }
 
 func (mc *MutualCpu) NewPlugin(s string) dpm.PluginInterface {
