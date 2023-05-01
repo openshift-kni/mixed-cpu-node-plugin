@@ -1,6 +1,11 @@
 name: CI E2E
 
 on:
+  push:
+    tags:
+      - v*
+    branches:
+      - main
   pull_request:
     branches:
       - 'main'
@@ -33,6 +38,10 @@ jobs:
         run: |
           go version
           kind version
+
+      - name: run unit-tests
+        run: |
+          make test-unit
 
       - name: build test binary
         run: |
