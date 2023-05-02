@@ -25,6 +25,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 
 	"github.com/containerd/nri/pkg/api"
+	e2ecpuset "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/cpuset"
 )
 
 const (
@@ -43,7 +44,7 @@ func TestCreateContainer(t *testing.T) {
 	}{
 		{
 			name:       "pod without annotation",
-			mutualCPUs: cpuset.MustParse(sampleCPUs),
+			mutualCPUs: e2ecpuset.MustParse(sampleCPUs),
 			sb:         makePodSandbox("test-sb"),
 			ctr:        makeContainer("test-ctr", withLinuxResources("1,2", 20000)),
 			lres:       nil,

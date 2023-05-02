@@ -27,11 +27,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 	k8sutils "k8s.io/kubernetes/test/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
+	e2ecpuset "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/cpuset"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/pods"
 )
 
@@ -88,7 +88,7 @@ var _ = Describe("Mixedcpus", func() {
 
 			sharedCpus := GetSharedCPUs()
 			Expect(sharedCpus).ToNot(BeEmpty())
-			sharedCpusSet := cpuset.MustParse(sharedCpus)
+			sharedCpusSet := e2ecpuset.MustParse(sharedCpus)
 
 			By(fmt.Sprintf("checking if shared CPUs ids %s are presented under pod %s/%s", sharedCpus, pod.Namespace, pod.Name))
 			intersect := cpus.Intersection(sharedCpusSet)
