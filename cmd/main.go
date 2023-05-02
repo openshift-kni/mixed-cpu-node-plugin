@@ -23,8 +23,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/kubevirt/device-plugin-manager/pkg/dpm"
 
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/deviceplugin"
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/nriplugin"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/nriplugin"
 )
 
 func main() {

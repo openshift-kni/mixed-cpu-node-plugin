@@ -19,17 +19,17 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/deviceplugin"
-	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 	k8sutils "k8s.io/kubernetes/test/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/test/e2e/pods"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/pods"
 )
 
 const (

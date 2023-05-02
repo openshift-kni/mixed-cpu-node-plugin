@@ -23,8 +23,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/cgroups"
-	"github.com/Tal-or/nri-mixed-cpu-pools-plugin/pkg/deviceplugin"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/cgroups"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
 	"github.com/containerd/nri/pkg/api"
 	"github.com/containerd/nri/pkg/stub"
 	"github.com/golang/glog"
