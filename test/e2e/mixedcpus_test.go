@@ -25,11 +25,17 @@ const (
 )
 
 var _ = Describe("Mixedcpus", func() {
+	BeforeEach(func() {
+		Expect(createNamespace("mixedcpus-testing-")).ToNot(HaveOccurred())
+		DeferCleanup(deleteNamespace, fixture.NS)
+	})
+
 	When("a pod gets request for shared cpu device", func() {
-		It("should contains the shared cpus under its cgroups", func() {
+		var pod *corev1.Pod
+		BeforeEach(func() {
+			By("checking if minimal cpus are available for testing")
 			nodeList := &corev1.NodeList{}
 			Expect(fixture.Cli.List(context.TODO(), nodeList)).ToNot(HaveOccurred())
-
 			var nodes []*corev1.Node
 			for i := 0; i < len(nodeList.Items); i++ {
 				node := &nodeList.Items[i]
@@ -38,11 +44,11 @@ var _ = Describe("Mixedcpus", func() {
 				}
 			}
 			if len(nodes) < minimalNodesForTesting {
-				Skip(fmt.Sprintf("minimum of %d nodes with minimum of %d cpus are needed", minimalNodesForTesting, minimalCPUsForTesting))
+				Skipf("minimum of %d nodes with minimum of %d cpus are needed", minimalNodesForTesting, minimalCPUsForTesting)
 			}
 
 			By("creating a pod with shared-cpu device")
-			pod := pods.Make("test", fixture.NS.Name, pods.WithLimits(corev1.ResourceList{
+			pod = pods.Make("test", fixture.NS.Name, pods.WithLimits(corev1.ResourceList{
 				corev1.ResourceCPU:               resource.MustParse("1"),
 				corev1.ResourceMemory:            resource.MustParse("100M"),
 				deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),
@@ -58,7 +64,9 @@ var _ = Describe("Mixedcpus", func() {
 				}
 				return true
 			}).WithPolling(time.Second * 5).WithTimeout(time.Minute * 3).WithContext(context.TODO()).Should(BeTrue())
+		})
 
+		It("should contain the shared cpus under its cgroups", func() {
 			cpus, err := pods.GetAllowedCPUs(fixture.K8SCli, pod)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -69,6 +77,20 @@ var _ = Describe("Mixedcpus", func() {
 			By(fmt.Sprintf("checking if shared CPUs ids %s are presented under pod %s/%s", sharedCpus, pod.Namespace, pod.Name))
 			intersect := cpus.Intersection(sharedCpusSet)
 			Expect(intersect.Equals(sharedCpusSet)).To(BeTrue(), "shared cpu ids: %s, are not presented. pod: %v cpu ids are: %s", sharedCpusSet.String(), fmt.Sprintf("%s/%s", pod.Namespace, pod.Name), cpus.String())
+		})
+
+		It("can have more than one pod accessing shared cpus", func() {
+
+		})
+
+		It("should contain OPENSHIFT_MUTUAL_CPUS environment variable", func() {
+
+		})
+	})
+
+	When("[Slow][Reboot] node goes into reboot", func() {
+		It("should have all pods with shared cpus running after it goes back up", func() {
+
 		})
 	})
 })

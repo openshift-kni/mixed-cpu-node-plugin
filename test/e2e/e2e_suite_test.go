@@ -2,8 +2,11 @@ package e2e_test
 
 import (
 	"context"
+	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -16,6 +19,7 @@ import (
 )
 
 type TestFixture struct {
+	ctx    context.Context
 	Cli    client.Client
 	K8SCli *kubernetes.Clientset
 	NS     *corev1.Namespace
@@ -25,12 +29,9 @@ var fixture TestFixture
 
 func TestE2e(t *testing.T) {
 	BeforeSuite(func() {
+		fixture.ctx = context.Background()
 		Expect(initClient()).ToNot(HaveOccurred())
 		Expect(initK8SClient()).ToNot(HaveOccurred())
-		Expect(createNamespace("mixedcpus-testing-")).ToNot(HaveOccurred())
-	})
-	AfterSuite(func() {
-		Expect(fixture.Cli.Delete(context.TODO(), fixture.NS)).ToNot(HaveOccurred())
 	})
 
 	RegisterFailHandler(Fail)
@@ -76,6 +77,26 @@ func createNamespace(prefix string) error {
 	return nil
 }
 
+func deleteNamespace(ns *corev1.Namespace) error {
+	err := fixture.Cli.Delete(context.TODO(), ns)
+	if err != nil {
+		return fmt.Errorf("failed deleting namespace %q; %w", ns.Name, err)
+	}
+
+	EventuallyWithOffset(1, func() (bool, error) {
+		err = fixture.Cli.Get(fixture.ctx, client.ObjectKeyFromObject(ns), ns)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return false, err
+			}
+			return true, nil
+		}
+		return false, nil
+	}).WithPolling(time.Second*5).WithTimeout(time.Minute*5).Should(BeTrue(), "namespace %q has not been terminated", ns.Name)
+
+	return nil
+}
+
 // TODO make it possible to read directly from DaemonSet
 func GetSharedCPUs() string {
 	cpus, ok := os.LookupEnv("E2E_SHARED_CPUS")
@@ -83,4 +104,8 @@ func GetSharedCPUs() string {
 		return ""
 	}
 	return cpus
+}
+
+func Skipf(format string, a ...any) {
+	Skip(fmt.Sprintf(format, a...))
 }
