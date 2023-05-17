@@ -4,6 +4,11 @@ github.com/NYTimes/gziphandler
 # github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
 ## explicit; go 1.16
 github.com/antlr/antlr4/runtime/Go/antlr
+# github.com/aquasecurity/go-version v0.0.0-20210121072130-637058cfe492
+## explicit; go 1.15
+github.com/aquasecurity/go-version/pkg/part
+github.com/aquasecurity/go-version/pkg/prerelease
+github.com/aquasecurity/go-version/pkg/version
 # github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
@@ -181,6 +186,20 @@ github.com/josharian/intern
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
+# github.com/k8stopologyawareschedwg/deployer v0.13.1
+## explicit; go 1.19
+github.com/k8stopologyawareschedwg/deployer/pkg/clientutil
+github.com/k8stopologyawareschedwg/deployer/pkg/deployer/platform
+github.com/k8stopologyawareschedwg/deployer/pkg/deployer/platform/detect
+# github.com/k8stopologyawareschedwg/noderesourcetopology-api v0.1.1
+## explicit; go 1.16
+github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/apis/topology
+github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/apis/topology/v1alpha1
+github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/apis/topology/v1alpha2
+github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/generated/clientset/versioned
+github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/generated/clientset/versioned/scheme
+github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/generated/clientset/versioned/typed/topology/v1alpha1
+github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/generated/clientset/versioned/typed/topology/v1alpha2
 # github.com/kubevirt/device-plugin-manager v1.19.4
 ## explicit; go 1.14
 github.com/kubevirt/device-plugin-manager/pkg/dpm
@@ -266,9 +285,20 @@ github.com/opencontainers/runc/libcontainer/utils
 # github.com/opencontainers/runtime-spec v1.0.3-0.20220909204839-494a5a6aca78
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v3.9.0+incompatible
-## explicit
+# github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20230509100629-894b49f57a15
+## explicit; go 1.20
+github.com/openshift/api/config/v1
+github.com/openshift/api/config/v1alpha1
 github.com/openshift/api/security/v1
+# github.com/openshift/client-go v0.0.0-20230120202327-72f107311084
+## explicit; go 1.19
+github.com/openshift/client-go/config/applyconfigurations/config/v1
+github.com/openshift/client-go/config/applyconfigurations/internal
+github.com/openshift/client-go/config/clientset/versioned/scheme
+github.com/openshift/client-go/config/clientset/versioned/typed/config/v1
+# github.com/openshift/machine-config-operator v0.0.1-0.20230511024419-557fd8e85e4e
+## explicit; go 1.18
+github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -386,11 +416,11 @@ go.opentelemetry.io/proto/otlp/collector/trace/v1
 go.opentelemetry.io/proto/otlp/common/v1
 go.opentelemetry.io/proto/otlp/resource/v1
 go.opentelemetry.io/proto/otlp/trace/v1
-# go.uber.org/atomic v1.7.0
-## explicit; go 1.13
+# go.uber.org/atomic v1.10.0
+## explicit; go 1.18
 go.uber.org/atomic
-# go.uber.org/multierr v1.6.0
-## explicit; go 1.12
+# go.uber.org/multierr v1.8.0
+## explicit; go 1.14
 go.uber.org/multierr
 # go.uber.org/zap v1.24.0
 ## explicit; go 1.19
@@ -474,6 +504,10 @@ golang.org/x/time/rate
 ## explicit; go 1.18
 golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/internal/typeparams
+# golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
+## explicit; go 1.17
+golang.org/x/xerrors
+golang.org/x/xerrors/internal
 # google.golang.org/appengine v1.6.7
 ## explicit; go 1.11
 google.golang.org/appengine/internal
@@ -651,6 +685,15 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
+# k8s.io/apiextensions-apiserver v0.26.1
+## explicit; go 1.19
+k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
+k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
+k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
+k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset
+k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
+k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
+k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
 # k8s.io/apimachinery v0.27.1
 ## explicit; go 1.20
 k8s.io/apimachinery/pkg/api/equality
@@ -1204,14 +1247,14 @@ k8s.io/kube-openapi/pkg/validation/errors
 k8s.io/kube-openapi/pkg/validation/spec
 k8s.io/kube-openapi/pkg/validation/strfmt
 k8s.io/kube-openapi/pkg/validation/strfmt/bson
-# k8s.io/kubectl v0.0.0 => k8s.io/kubectl v0.27.1
+# k8s.io/kubectl v0.25.1 => k8s.io/kubectl v0.27.1
 ## explicit; go 1.20
 k8s.io/kubectl/pkg/scale
 # k8s.io/kubelet v0.26.0 => k8s.io/kubelet v0.27.1
 ## explicit; go 1.20
 k8s.io/kubelet/pkg/apis
 k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
-# k8s.io/kubernetes v0.0.0-00010101000000-000000000000 => k8s.io/kubernetes v1.27.1
+# k8s.io/kubernetes v1.25.4 => k8s.io/kubernetes v1.27.1
 ## explicit; go 1.20
 k8s.io/kubernetes/pkg/api/legacyscheme
 k8s.io/kubernetes/pkg/api/service
@@ -1308,3 +1351,4 @@ sigs.k8s.io/yaml
 # k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.27.1
 # k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.27.1
 # github.com/containerd/nri => github.com/containerd/nri v0.3.0
+# github.com/openshift/api => github.com/openshift/api v0.0.0-20230509100629-894b49f57a15
