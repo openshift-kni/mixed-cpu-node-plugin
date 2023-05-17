@@ -30,24 +30,37 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/infrastructure"
+	securityv1 "github.com/openshift/api/security/v1"
+	machineconfigv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 
+const defaultNamespaceName = "e2e-mixed-cpu-node-plugin"
+
 type TestFixture struct {
-	ctx    context.Context
+	Ctx    context.Context
 	Cli    client.Client
 	K8SCli *kubernetes.Clientset
-	NS     *corev1.Namespace
+	// TestingNS randomly generated for each test and gets deleted when the test ends
+	TestingNS *corev1.Namespace
 }
 
 var fixture TestFixture
 
 func TestE2e(t *testing.T) {
 	BeforeSuite(func() {
-		fixture.ctx = context.Background()
+		fixture.Ctx = context.Background()
 		Expect(initClient()).ToNot(HaveOccurred())
 		Expect(initK8SClient()).ToNot(HaveOccurred())
+		Expect(infrastructure.Setup(fixture.Ctx, fixture.Cli, GetNamespaceName())).ToNot(HaveOccurred(), "failed setup test infrastructure")
+	})
+
+	AfterSuite(func() {
+		Expect(infrastructure.Teardown(fixture.Ctx, fixture.Cli, GetNamespaceName())).ToNot(HaveOccurred())
 	})
 
 	RegisterFailHandler(Fail)
@@ -55,9 +68,38 @@ func TestE2e(t *testing.T) {
 
 }
 
+// TODO make it possible to read directly from DaemonSet
+func GetSharedCPUs() string {
+	cpus, ok := os.LookupEnv("E2E_SHARED_CPUS")
+	if !ok {
+		return ""
+	}
+	return cpus
+}
+
+func GetNamespaceName() string {
+	cpus, ok := os.LookupEnv("E2E_NAMESPACE")
+	if !ok {
+		return defaultNamespaceName
+	}
+	return cpus
+}
+
+func Skipf(format string, a ...any) {
+	Skip(fmt.Sprintf(format, a...))
+}
+
 func initClient() error {
 	cfg, err := config.GetConfig()
 	if err != nil {
+		return err
+	}
+
+	if err = machineconfigv1.AddToScheme(scheme.Scheme); err != nil {
+		return err
+	}
+
+	if err = securityv1.AddToScheme(scheme.Scheme); err != nil {
 		return err
 	}
 
@@ -89,7 +131,7 @@ func createNamespace(prefix string) error {
 	if err := fixture.Cli.Create(context.TODO(), ns); err != nil {
 		return err
 	}
-	fixture.NS = ns
+	fixture.TestingNS = ns
 	return nil
 }
 
@@ -100,7 +142,7 @@ func deleteNamespace(ns *corev1.Namespace) error {
 	}
 
 	EventuallyWithOffset(1, func() (bool, error) {
-		err = fixture.Cli.Get(fixture.ctx, client.ObjectKeyFromObject(ns), ns)
+		err = fixture.Cli.Get(fixture.Ctx, client.ObjectKeyFromObject(ns), ns)
 		if err != nil {
 			if !errors.IsNotFound(err) {
 				return false, err
@@ -111,17 +153,4 @@ func deleteNamespace(ns *corev1.Namespace) error {
 	}).WithPolling(time.Second*5).WithTimeout(time.Minute*5).Should(BeTrue(), "namespace %q has not been terminated", ns.Name)
 
 	return nil
-}
-
-// TODO make it possible to read directly from DaemonSet
-func GetSharedCPUs() string {
-	cpus, ok := os.LookupEnv("E2E_SHARED_CPUS")
-	if !ok {
-		return ""
-	}
-	return cpus
-}
-
-func Skipf(format string, a ...any) {
-	Skip(fmt.Sprintf(format, a...))
 }
