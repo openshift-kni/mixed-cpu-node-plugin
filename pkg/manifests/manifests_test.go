@@ -28,7 +28,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	mf, err := Get()
+	mf, err := Get("unit-test-ns")
 	if err != nil {
 		t.Errorf("failed to get manifests %v", err)
 	}
@@ -47,7 +47,18 @@ func TestGet(t *testing.T) {
 	if reflect.DeepEqual(mf.RB, rbacv1.RoleBinding{}) {
 		t.Errorf("%q object is empty", mf.RB.Kind)
 	}
-	if reflect.DeepEqual(mf.SSC, securityv1.SecurityContextConstraints{}) {
-		t.Errorf("%q object is empty", mf.SSC.Kind)
+	if reflect.DeepEqual(mf.SCC, securityv1.SecurityContextConstraints{}) {
+		t.Errorf("%q object is empty", mf.SCC.Kind)
+	}
+	if mf.NS.Name != "unit-test-ns" {
+		t.Errorf("wrong namespace name %q", mf.NS.Name)
+	}
+
+	mf, err = Get("")
+	if err != nil {
+		t.Errorf("failed to get manifests %v", err)
+	}
+	if !reflect.DeepEqual(mf.NS, corev1.Namespace{}) {
+		t.Errorf("should have an empty namespace when specified ns is \"\"")
 	}
 }
