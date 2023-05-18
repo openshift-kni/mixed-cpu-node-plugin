@@ -37,14 +37,13 @@ BUILD_PATH    := $(shell pwd)/build
 BIN_PATH      := $(BUILD_PATH)/bin
 COVERAGE_PATH := $(BUILD_PATH)/coverage
 
-PLUGIN = $(BIN_PATH)/mixedcpus
-
+PLUGIN = $(BIN_PATH)/mixedcpu
 
 COMMONENVVAR = GOOS=linux GOARCH=amd64
 BUILDENVVAR = CGO_ENABLED=1
 RUNTIME ?= docker
-REPOOWNER ?= titzhak
-IMAGENAME ?= mixedcpus
+REPOOWNER ?= openshift-kni
+IMAGENAME ?= mixed-cpu-node-plugin
 IMAGETAG ?= latest
 MIXED_CPUS_CONTAINER_IMAGE ?= quay.io/${REPOOWNER}/${IMAGENAME}:${IMAGETAG}
 
@@ -89,45 +88,15 @@ build-plugin: mkdir
 build-check:
 	$(Q)$(GO_BUILD) -v $(GO_MODULES)
 
-#
-# clean targets
-#
-
-clean-plugins:
-	$(Q)rm -f $(PLUGINS)
-
-clean-cache:
-	$(Q)$(GO_CMD) clean -cache -testcache
-
-#
-# test targets
-#
-
-test-gopkgs: ginkgo-tests
-
-ginkgo-tests:
-	$(Q)$(GINKGO) run \
-	    --race \
-	    --trace \
-	    --cover \
-	    --covermode atomic \
-	    --output-dir $(COVERAGE_PATH) \
-	    --junit-report junit.xml \
-	    --coverprofile coverprofile \
-	    --succinct \
-	    -r .; \
-	$(GO_CMD) tool cover -html=$(COVERAGE_PATH)/coverprofile -o $(COVERAGE_PATH)/coverage.html
-
-codecov: SHELL := $(shell which bash)
-codecov:
-	bash <(curl -s https://codecov.io/bash) -f $(COVERAGE_PATH)/coverprofile
+build-e2e:
+	$(GO_CMD) test -c -o build/bin/e2e_test test/e2e/*.go
 
 #
 # other validation targets
 #
 
 fmt format:
-	$(Q)$(GO_FMT) -s -d -e .
+	$(Q)$(GO_FMT) -s -d -e pkg/ cmd/
 
 lint:
 	$(Q)$(GO_LINT) -set_exit_status ./...
@@ -190,17 +159,19 @@ undeploy:
 	@echo "Deleting mixed-cpus plugin"
 	$(CLIENT) delete -k deployment/kustomize/overlays/$(KUSTOMIZE_DEPLOY_DIR)
 
+#
+# test targets
+#
+
 test-unit:
 	$(GO_CMD) test -v ./pkg/...
+
+test-e2e: build-e2e
+	hack/e2e-run-test.sh $(E2E_SHARED_CPUS) $(E2E_SETUP) $(E2E_TEARDOWN)
+
 
 deps-update:
 	$(GO_CMD) mod tidy && $(GO_CMD) mod vendor
 
 e2e-wait-for-ds:
 	hack/wait-for-ds.sh
-
-build-e2e:
-	$(GO_CMD) test -c -o build/bin/e2e_test test/e2e/*.go
-
-e2e-test: build-e2e
-	hack/e2e-run-test.sh $(E2E_SHARED_CPUS) $(E2E_SETUP) $(E2E_TEARDOWN)
