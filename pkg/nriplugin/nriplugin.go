@@ -23,11 +23,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/cgroups"
-	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
 	"github.com/containerd/nri/pkg/api"
 	"github.com/containerd/nri/pkg/stub"
 	"github.com/golang/glog"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/cgroups"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
 )
 
 const (
