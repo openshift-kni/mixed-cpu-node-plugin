@@ -55,6 +55,11 @@ ifneq ($(V),1)
   Q := @
 endif
 
+# E2E configuration
+E2E_SHARED_CPUS ?= 0
+E2E_SETUP ?= FALSE
+E2E_TEARDOWN ?= FALSE
+
 #
 # top-level targets
 #
@@ -198,4 +203,4 @@ build-e2e:
 	$(GO_CMD) test -c -o build/bin/e2e_test test/e2e/*.go
 
 e2e-test: build-e2e
-	hack/e2e-run-test.sh $(E2E_SHARED_CPUS)
+	hack/e2e-run-test.sh $(E2E_SHARED_CPUS) $(E2E_SETUP) $(E2E_TEARDOWN)

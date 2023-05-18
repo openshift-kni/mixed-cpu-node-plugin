@@ -14,6 +14,5 @@ allowPrivilegedContainer: true
 supplementalGroups:
   type: RunAsAny
 users:
-  - system:serviceaccount:mixedcpus-plugin:mixedcpus-plugin
 volumes:
   - '*'

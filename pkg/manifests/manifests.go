@@ -19,13 +19,14 @@ package manifests
 import (
 	"embed"
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1 "github.com/openshift/api/security/v1"
 )
@@ -39,18 +40,17 @@ type Manifests struct {
 	DS   appsv1.DaemonSet
 	Role rbacv1.Role
 	RB   rbacv1.RoleBinding
-	SSC  securityv1.SecurityContextConstraints
+	SCC  securityv1.SecurityContextConstraints
 }
 
-func Get() (*Manifests, error) {
+func Get(ns string) (*Manifests, error) {
 	mf := Manifests{}
 	var fileToObject = map[string]metav1.Object{
 		"serviceaccount.yaml":            &mf.SA,
-		"namespace.yaml":                 &mf.NS,
 		"daemonset.yaml":                 &mf.DS,
 		"role.yaml":                      &mf.Role,
 		"rolebinding.yaml":               &mf.RB,
-		"securitycontextconstraint.yaml": &mf.SSC,
+		"securitycontextconstraint.yaml": &mf.SCC,
 	}
 
 	files, err := dir.ReadDir("yamls")
@@ -72,5 +72,31 @@ func Get() (*Manifests, error) {
 		}
 	}
 
+	if ns != "" {
+		mf.NS = corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		}
+		mf.DS.Namespace = ns
+		mf.Role.Namespace = ns
+		mf.RB.Namespace = ns
+		mf.SA.Namespace = ns
+	}
+
+	mf.SCC.Users = []string{
+		fmt.Sprintf("system:serviceaccount:%s:%s", mf.SA.Namespace, mf.SA.Name),
+	}
 	return &mf, nil
+}
+
+func (mf *Manifests) ToObjects() []client.Object {
+	return []client.Object{
+		&mf.NS,
+		&mf.DS,
+		&mf.Role,
+		&mf.RB,
+		&mf.SA,
+		&mf.SCC,
+	}
 }

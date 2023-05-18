@@ -11,6 +11,7 @@ spec:
       labels:
         app: mixedcpus-plugin
     spec:
+      serviceAccountName: mixedcpus-plugin
       containers:
           - name: mixedcpus-plugin
             image: quay.io/titzhak/mixedcpus

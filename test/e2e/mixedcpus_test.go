@@ -43,7 +43,7 @@ const (
 var _ = Describe("Mixedcpus", func() {
 	BeforeEach(func() {
 		Expect(createNamespace("mixedcpus-testing-")).ToNot(HaveOccurred())
-		DeferCleanup(deleteNamespace, fixture.NS)
+		DeferCleanup(deleteNamespace, fixture.TestingNS)
 	})
 
 	When("a pod gets request for shared cpu device", func() {
@@ -64,7 +64,7 @@ var _ = Describe("Mixedcpus", func() {
 			}
 
 			By("creating a pod with shared-cpu device")
-			pod = pods.Make("test", fixture.NS.Name, pods.WithLimits(corev1.ResourceList{
+			pod = pods.Make("test", fixture.TestingNS.Name, pods.WithLimits(corev1.ResourceList{
 				corev1.ResourceCPU:               resource.MustParse("1"),
 				corev1.ResourceMemory:            resource.MustParse("100M"),
 				deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),

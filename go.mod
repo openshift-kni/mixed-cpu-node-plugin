@@ -20,9 +20,18 @@ require (
 )
 
 require (
+	github.com/k8stopologyawareschedwg/deployer v0.13.1
 	github.com/onsi/ginkgo/v2 v2.9.1
 	github.com/onsi/gomega v1.27.4
-	k8s.io/kubernetes v0.0.0-00010101000000-000000000000
+	k8s.io/kubernetes v1.25.4
+)
+
+require (
+	github.com/aquasecurity/go-version v0.0.0-20210121072130-637058cfe492 // indirect
+	github.com/k8stopologyawareschedwg/noderesourcetopology-api v0.1.1 // indirect
+	github.com/openshift/client-go v0.0.0-20230120202327-72f107311084 // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	k8s.io/apiextensions-apiserver v0.26.1 // indirect
 )
 
 require (
@@ -77,6 +86,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20220909204839-494a5a6aca78 // indirect
+	github.com/openshift/machine-config-operator v0.0.1-0.20230511024419-557fd8e85e4e
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
@@ -99,8 +109,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.10.0 // indirect
 	go.opentelemetry.io/otel/trace v1.10.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
@@ -125,8 +135,8 @@ require (
 	k8s.io/controller-manager v0.27.1 // indirect
 	k8s.io/kms v0.27.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
-	k8s.io/kubectl v0.0.0 // indirect
-	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect
+	k8s.io/kubectl v0.25.1 // indirect
+	k8s.io/utils v0.0.0-20230209194617-a36077c30491
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.1 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
@@ -161,4 +171,7 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.27.1
 )
 
-replace github.com/containerd/nri => github.com/containerd/nri v0.3.0
+replace (
+	github.com/containerd/nri => github.com/containerd/nri v0.3.0
+	github.com/openshift/api => github.com/openshift/api v0.0.0-20230509100629-894b49f57a15
+)
