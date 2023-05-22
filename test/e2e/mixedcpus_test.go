@@ -43,7 +43,9 @@ const (
 
 var _ = Describe("Mixedcpus", func() {
 	BeforeEach(func() {
-		Expect(createNamespace("mixedcpus-testing-")).ToNot(HaveOccurred())
+		ns, err := createNamespace("mixedcpus-testing-")
+		Expect(err).ToNot(HaveOccurred())
+		fixture.TestingNS = ns
 		DeferCleanup(deleteNamespace, fixture.TestingNS)
 	})
 

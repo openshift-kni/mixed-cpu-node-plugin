@@ -67,7 +67,9 @@ func TestE2e(t *testing.T) {
 	RunSpecs(t, "E2e Suite")
 
 }
-
+// GetNamespaceName returns the namespace provided by E2E_NAMESPACE environment variable.
+// When E2E_SETUP=true, all infrastructure resources get deployed under this namespace.
+// This has nothing to do with the createNamespace() function
 func GetNamespaceName() string {
 	cpus, ok := os.LookupEnv("E2E_NAMESPACE")
 	if !ok {
@@ -107,7 +109,7 @@ func initK8SClient() error {
 	return err
 }
 
-func createNamespace(prefix string) error {
+func createNamespace(prefix string) (*corev1.Namespace, error) {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: prefix,
@@ -119,11 +121,11 @@ func createNamespace(prefix string) error {
 			},
 		},
 	}
-	if err := fixture.Cli.Create(context.TODO(), ns); err != nil {
-		return err
+	err := fixture.Cli.Create(context.TODO(), ns)
+	if err != nil {
+		return ns, fmt.Errorf("failed to create namespace %s; %w", ns.Name, err)
 	}
-	fixture.TestingNS = ns
-	return nil
+	return ns, nil
 }
 
 func deleteNamespace(ns *corev1.Namespace) error {
@@ -142,6 +144,5 @@ func deleteNamespace(ns *corev1.Namespace) error {
 		}
 		return false, nil
 	}).WithPolling(time.Second*5).WithTimeout(time.Minute*5).Should(BeTrue(), "namespace %q has not been terminated", ns.Name)
-
 	return nil
 }
