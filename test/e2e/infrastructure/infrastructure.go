@@ -17,9 +17,9 @@ import (
 
 	"github.com/k8stopologyawareschedwg/deployer/pkg/deployer/platform"
 	"github.com/k8stopologyawareschedwg/deployer/pkg/deployer/platform/detect"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/internal/wait"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/manifests"
 	e2econfig "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/config"
-	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/wait"
 	machineconfigv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 

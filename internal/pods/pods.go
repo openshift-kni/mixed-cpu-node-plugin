@@ -23,12 +23,15 @@ import (
 	"os"
 	"strings"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -101,7 +104,7 @@ func GetAllowedCPUs(c *kubernetes.Clientset, pod *corev1.Pod) (*cpuset.CPUSet, e
 	cmd := []string{"/bin/sh", "-c", "grep Cpus_allowed_list /proc/self/status | cut -f2"}
 	out, err := Exec(c, pod, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("failed to run command: %s out: %s; %w", cmd, out, err)
+		return nil, err
 	}
 
 	cpus, err := cpuset.Parse(strings.Trim(string(out), "\r\n"))
@@ -147,12 +150,29 @@ func Exec(c *kubernetes.Clientset, pod *corev1.Pod, command []string) ([]byte, e
 		Tty:    true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to run command %v: output %q; error %q; %w", command, outputBuf.String(), errorBuf.String(), err)
+		return nil, fmt.Errorf("failed to run command: %v output %q; error %q; %w", command, outputBuf.String(), errorBuf.String(), err)
 	}
 
 	if errorBuf.Len() != 0 {
-		return nil, fmt.Errorf("failed to run command %v: output %q; error %q", command, outputBuf.String(), errorBuf.String())
+		return nil, fmt.Errorf("failed to run command: %v output %q; error %q", command, outputBuf.String(), errorBuf.String())
 	}
 
 	return outputBuf.Bytes(), nil
+}
+
+// OwnedByDeployment return list of pods owned by workload resources (DaemonSet/Deployment/ReplicaSet/StatefulSets)
+func OwnedByDeployment(ctx context.Context, c client.Client, dp *appsv1.Deployment) ([]corev1.Pod, error) {
+	podlist := &corev1.PodList{}
+	labelMap, err := metav1.LabelSelectorAsMap(dp.Spec.Selector)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert LabelSelector=%v to map; %w", dp.Spec.Selector, err)
+	}
+	opts := &client.ListOptions{
+		LabelSelector: labels.SelectorFromSet(labelMap),
+	}
+	err = c.List(ctx, podlist, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list pods; %w", err)
+	}
+	return podlist.Items, nil
 }

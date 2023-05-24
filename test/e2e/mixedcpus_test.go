@@ -30,10 +30,10 @@ import (
 	k8sutils "k8s.io/kubernetes/test/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift-kni/mixed-cpu-node-plugin/internal/pods"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
 	e2econfig "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/config"
 	e2ecpuset "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/cpuset"
-	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/pods"
 )
 
 const (
