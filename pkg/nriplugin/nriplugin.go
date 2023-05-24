@@ -173,7 +173,7 @@ func setMutualCPUs(ctr *api.Container, mutualCPUs *cpuset.CPUSet, uniqueName str
 		lspec.Resources == nil ||
 		lspec.Resources.Cpu == nil ||
 		lspec.Resources.Cpu.Cpus == "" {
-		return fmt.Errorf("no cpus found")
+		return fmt.Errorf("no cpus found for container %q", ctr.GetName())
 	}
 	ctrCpus := lspec.Resources.Cpu
 	curCpus, err := cpuset.Parse(ctrCpus.Cpus)
