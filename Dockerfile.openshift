@@ -1,4 +1,4 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
-COPY build/bin/mixedcpu /bin/mixedcpu
+COPY mixedcpu /bin/mixedcpu
 USER 65532:65532
 ENTRYPOINT [ "/bin/mixedcpu" ]
