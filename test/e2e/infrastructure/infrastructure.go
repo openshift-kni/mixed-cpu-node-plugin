@@ -18,6 +18,7 @@ import (
 	"github.com/k8stopologyawareschedwg/deployer/pkg/deployer/platform"
 	"github.com/k8stopologyawareschedwg/deployer/pkg/deployer/platform/detect"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/manifests"
+	e2econfig "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/config"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/wait"
 	machineconfigv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
@@ -84,7 +85,7 @@ func setup(ctx context.Context, c client.Client, ns string) error {
 		return err
 	}
 
-	mf, err := manifests.Get(ns)
+	mf, err := manifests.Get(ns, e2econfig.SharedCPUs())
 	if err != nil {
 		return err
 	}
@@ -113,7 +114,7 @@ func setup(ctx context.Context, c client.Client, ns string) error {
 }
 
 func teardown(ctx context.Context, c client.Client, ns string) error {
-	mf, err := manifests.Get(ns)
+	mf, err := manifests.Get(ns, e2econfig.SharedCPUs())
 	if err != nil {
 		return err
 	}
