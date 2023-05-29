@@ -68,15 +68,6 @@ func TestE2e(t *testing.T) {
 
 }
 
-// TODO make it possible to read directly from DaemonSet
-func GetSharedCPUs() string {
-	cpus, ok := os.LookupEnv("E2E_SHARED_CPUS")
-	if !ok {
-		return ""
-	}
-	return cpus
-}
-
 func GetNamespaceName() string {
 	cpus, ok := os.LookupEnv("E2E_NAMESPACE")
 	if !ok {
