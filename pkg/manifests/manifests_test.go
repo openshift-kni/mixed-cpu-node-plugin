@@ -18,17 +18,74 @@ package manifests
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 
 	securityv1 "github.com/openshift/api/security/v1"
 )
 
+func TestSetSharedCPUs(t *testing.T) {
+	tcs := []struct {
+		cpus    string
+		IsError bool
+	}{
+		{
+			cpus:    "0-3,5",
+			IsError: false,
+		},
+		{
+			cpus:    "1,5,4",
+			IsError: false,
+		},
+		{
+			cpus:    "badformat",
+			IsError: true,
+		},
+		{
+			cpus:    "1,6,b",
+			IsError: true,
+		},
+	}
+	for _, tc := range tcs {
+		mf, err := Get("", tc.cpus)
+		if !tc.IsError && err != nil {
+			t.Errorf("failed to get manifests %v", err)
+		}
+		if tc.IsError {
+			if err == nil {
+				t.Errorf("a bad cpu format was given %q, expected error to have occured", tc.cpus)
+			}
+			continue
+		}
+
+		var gotCPUset cpuset.CPUSet
+		cnt := &mf.DS.Spec.Template.Spec.Containers[0]
+		for _, arg := range cnt.Args {
+			keyAndValue := strings.Split(arg, "=")
+			if keyAndValue[0] == "--mutual-cpus" {
+				// we know the format is correct, otherwise Get() would return with an error
+				gotCPUset, _ = cpuset.Parse(keyAndValue[1])
+				break
+			}
+		}
+
+		wantCPUset, err := cpuset.Parse(tc.cpus)
+		if err != nil {
+			t.Error(err)
+		}
+		if !gotCPUset.Equals(wantCPUset) {
+			t.Errorf("shared CPUs were not set correctly; want: %q, got: %q", wantCPUset.String(), gotCPUset.String())
+		}
+	}
+}
+
 func TestGet(t *testing.T) {
-	mf, err := Get("unit-test-ns")
+	mf, err := Get("unit-test-ns", "0-3,5")
 	if err != nil {
 		t.Errorf("failed to get manifests %v", err)
 	}
@@ -54,7 +111,7 @@ func TestGet(t *testing.T) {
 		t.Errorf("wrong namespace name %q", mf.NS.Name)
 	}
 
-	mf, err = Get("")
+	mf, err = Get("", "1,2,4")
 	if err != nil {
 		t.Errorf("failed to get manifests %v", err)
 	}

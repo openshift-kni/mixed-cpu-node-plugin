@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/deviceplugin"
+	e2econfig "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/config"
 	e2ecpuset "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/cpuset"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/pods"
 )
@@ -86,7 +87,7 @@ var _ = Describe("Mixedcpus", func() {
 			cpus, err := pods.GetAllowedCPUs(fixture.K8SCli, pod)
 			Expect(err).ToNot(HaveOccurred())
 
-			sharedCpus := GetSharedCPUs()
+			sharedCpus := e2econfig.SharedCPUs()
 			Expect(sharedCpus).ToNot(BeEmpty())
 			sharedCpusSet := e2ecpuset.MustParse(sharedCpus)
 

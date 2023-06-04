@@ -20,12 +20,14 @@ import (
 	"embed"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1 "github.com/openshift/api/security/v1"
@@ -43,7 +45,7 @@ type Manifests struct {
 	SCC  securityv1.SecurityContextConstraints
 }
 
-func Get(ns string) (*Manifests, error) {
+func Get(ns string, sharedCPUs string) (*Manifests, error) {
 	mf := Manifests{}
 	var fileToObject = map[string]metav1.Object{
 		"serviceaccount.yaml":            &mf.SA,
@@ -87,6 +89,9 @@ func Get(ns string) (*Manifests, error) {
 	mf.SCC.Users = []string{
 		fmt.Sprintf("system:serviceaccount:%s:%s", mf.SA.Namespace, mf.SA.Name),
 	}
+	if err := mf.SetSharedCPUs(sharedCPUs); err != nil {
+		return nil, err
+	}
 	return &mf, nil
 }
 
@@ -99,4 +104,26 @@ func (mf *Manifests) ToObjects() []client.Object {
 		&mf.SA,
 		&mf.SCC,
 	}
+}
+
+// SetSharedCPUs updates the container args under the
+// DaemonSet with a --mutual-cpus value.
+// It returns an error if the cpus are not a valid cpu set.
+func (mf *Manifests) SetSharedCPUs(cpus string) error {
+	set, err := cpuset.Parse(cpus)
+	if err != nil {
+		return fmt.Errorf("failed to set shared cpus; %w", err)
+	}
+	cnt := &mf.DS.Spec.Template.Spec.Containers[0]
+	var newArgs []string
+	for _, arg := range cnt.Args {
+		keyAndValue := strings.Split(arg, "=")
+		if keyAndValue[0] == "--mutual-cpus" {
+			continue
+		}
+		newArgs = append(newArgs, arg)
+	}
+	newArgs = append(newArgs, fmt.Sprintf("--mutual-cpus=%s", set.String()))
+	cnt.Args = newArgs
+	return nil
 }
