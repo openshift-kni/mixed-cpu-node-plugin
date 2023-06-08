@@ -28,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 	"k8s.io/utils/pointer"
@@ -60,7 +61,7 @@ var _ = Describe("Mixedcpus", func() {
 		BeforeEach(func() {
 			checkMinimalCPUsForTesting()
 			dp = createDeployment("dp-test")
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp)
+			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp, &client.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			replicas := int(*dp.Spec.Replicas)
 			Expect(len(items)).To(Equal(replicas), "expected to find %d pods for deployment=%q found %d; %v", replicas, dp.Name, len(items), items)
@@ -82,10 +83,10 @@ var _ = Describe("Mixedcpus", func() {
 
 		It("can have more than one pod accessing shared cpus", func() {
 			dp2 := createDeployment("dp-test2")
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp2)
+			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp2, &client.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			replicas := int(*dp2.Spec.Replicas)
-			Expect(len(items)).To(Equal(replicas), "expected to find %d pods for deployment=%q found %d; %v", replicas, dp2.Name, len(items), items)
+			Expect(len(items)).To(Equal(replicas), "expected to find %d pods for deployment=%q found %d; %+v", replicas, dp2.Name, len(items), items)
 			pod2 := &items[0]
 
 			By("check the second pod successfully deployed with shared cpus")
@@ -123,9 +124,9 @@ var _ = Describe("Mixedcpus", func() {
 		BeforeEach(func() {
 			checkMinimalCPUsForTesting()
 			dp = createDeployment("dp-test")
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp)
+			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp, &client.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(len(items)).To(Equal(int(*dp.Spec.Replicas)), "expected to find %d pods for deployment=%q found %d; %v", int(*dp.Spec.Replicas), dp.Name, len(items), items)
+			Expect(len(items)).To(Equal(int(*dp.Spec.Replicas)), "expected to find %d pods for deployment=%q found %d; %+v", int(*dp.Spec.Replicas), dp.Name, len(items), items)
 			pod = &items[0]
 		})
 
@@ -140,10 +141,14 @@ var _ = Describe("Mixedcpus", func() {
 			Expect(wait.ForDeploymentReady(fixture.Ctx, fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
 
 			By("check pod successfully deployed with shared cpus")
-			// new pod got created after reboot, we need to find it again
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp)
+			// After reboot, the pod might fail since the shared cpu device is not ready.
+			// The deployment keep spins up new pod until the device is ready and the pod starts running.
+			// We want to check only the healthy pod (i.e., non terminal), hence, we filter the terminal pods.
+			fieldSelector, err := fields.ParseSelector(pods.NonTerminalSelector)
+			Expect(err).ToNot(HaveOccurred(), "failed to parse FieldSelector=%q", pods.NonTerminalSelector)
+			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp, &client.ListOptions{FieldSelector: fieldSelector})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(len(items)).To(Equal(int(*dp.Spec.Replicas)), "expected to find %d pods for deployment=%q found %d; %v", int(*dp.Spec.Replicas), dp.Name, len(items), items)
+			Expect(len(items)).To(Equal(int(*dp.Spec.Replicas)), "expected to find %d pods for deployment=%q found %d; %+v", int(*dp.Spec.Replicas), dp.Name, len(items), items)
 			pod = &items[0]
 
 			cpus, err := pods.GetAllowedCPUs(fixture.K8SCli, pod)
