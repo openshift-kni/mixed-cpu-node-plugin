@@ -175,3 +175,12 @@ func OwnedByDeployment(ctx context.Context, c client.Client, dp *appsv1.Deployme
 	}
 	return podlist.Items, nil
 }
+
+func PrintStatus(pods []corev1.Pod) string {
+	podsInfo := strings.Builder{}
+	for _, pod := range pods {
+		_, _ = podsInfo.WriteString(pod.Namespace + "/" + pod.Name + "\n")
+		podsInfo.WriteString(pod.Status.String() + "\n")
+	}
+	return podsInfo.String()
+}

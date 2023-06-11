@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift-kni/mixed-cpu-node-plugin/internal/pods"
 	machineconfigv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 
@@ -89,7 +90,12 @@ func ForDeploymentReady(ctx context.Context, c client.Client, key client.ObjectK
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed wait for deployment %q to be ready. only %d/%d are ready; %w", key.String(), dp.Status.ReadyReplicas, dp.Status.Replicas, err)
+		ownedPods, err := pods.OwnedByDeployment(ctx, c, dp, &client.ListOptions{})
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("failed wait for deployment %q to be ready. only %d/%d are ready;\n pods status: %s; %w",
+			key.String(), dp.Status.ReadyReplicas, dp.Status.Replicas, pods.PrintStatus(ownedPods), err)
 	}
 	return nil
 }
