@@ -40,7 +40,7 @@ COVERAGE_PATH := $(BUILD_PATH)/coverage
 PLUGIN = $(BIN_PATH)/mixedcpu
 
 COMMONENVVAR = GOOS=linux GOARCH=amd64
-BUILDENVVAR = CGO_ENABLED=1
+BUILDENVVAR = CGO_ENABLED=0
 RUNTIME ?= docker
 REPOOWNER ?= openshift-kni
 IMAGENAME ?= mixed-cpu-node-plugin
@@ -83,7 +83,7 @@ mkdir:
 	mkdir -p build/bin || true
 
 build-plugin: mkdir
-	$(GO_BUILD) -o $(PLUGIN) ./cmd/main.go
+	$(COMMONENVVAR) $(BUILDENVVAR) $(GO_BUILD) -o $(PLUGIN) ./cmd/main.go
 
 build-check:
 	$(Q)$(GO_BUILD) -v $(GO_MODULES)
