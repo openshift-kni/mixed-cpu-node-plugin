@@ -8,4 +8,4 @@ spec:
       pools.operator.machineconfiguration.openshift.io/worker: ""
   kubeletConfig:
     cpuManagerPolicy: "static"
-    reservedSystemCPUs: "0,1"
+    reservedSystemCPUs: "0"
