@@ -17,9 +17,6 @@
 package deviceplugin
 
 import (
-	"strconv"
-
-	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 
 	"github.com/containerd/nri/pkg/api"
@@ -33,8 +30,6 @@ const (
 	MutualCPUResourceName      = "mutualcpu"
 	MutualCPUDeviceName        = MutualCPUResourceNamespace + "/" + MutualCPUResourceName
 	EnvVarName                 = "OPENSHIFT_MUTUAL_CPUS"
-	// TODO is this number big enough?
-	DefaultDevicesNumber = 99
 )
 
 type MutualCpu struct {
@@ -50,7 +45,10 @@ func (mc *MutualCpu) Discover(pnl chan dpm.PluginNameList) {
 }
 
 func (mc *MutualCpu) NewPlugin(s string) dpm.PluginInterface {
-	return pluginImp{mutualCpus: &mc.cpus}
+	return pluginImp{
+		mutualCpus: &mc.cpus,
+		update:     make(chan message),
+	}
 }
 
 func New(cpus string) (*dpm.Manager, error) {
@@ -60,19 +58,6 @@ func New(cpus string) (*dpm.Manager, error) {
 	}
 	mc := &MutualCpu{cpus: mutualCpus}
 	return dpm.NewManager(mc), nil
-}
-
-func MakeMutualCpusDevices() []*pluginapi.Device {
-	var devs []*pluginapi.Device
-
-	for i := 0; i < DefaultDevicesNumber; i++ {
-		dev := &pluginapi.Device{
-			ID:     strconv.Itoa(i),
-			Health: pluginapi.Healthy,
-		}
-		devs = append(devs, dev)
-	}
-	return devs
 }
 
 // Requested checks whether a given container is requesting the device
