@@ -27,13 +27,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
-	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift-kni/mixed-cpu-node-plugin/internal/deployments"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/internal/nodes"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/internal/pods"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/internal/wait"
@@ -53,6 +52,31 @@ var _ = Describe("Mixedcpus", func() {
 		Expect(err).ToNot(HaveOccurred())
 		fixture.TestingNS = ns
 		DeferCleanup(deleteNamespace, fixture.TestingNS)
+	})
+
+	Context("requests more devices than node has", func() {
+		It("should generate more devices", func() {
+			By("create deployment which asks more devices than the node has")
+			pod := pods.Make("pod-test", fixture.TestingNS.Name, pods.WithLimits(corev1.ResourceList{
+				deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),
+			}))
+			workers, err := nodes.GetWorkers(fixture.Ctx, fixture.Cli)
+			Expect(err).ToNot(HaveOccurred())
+			var devicesCap resource.Quantity
+			for _, worker := range workers {
+				devicesPerWorker := worker.Status.Capacity.Name(deviceplugin.MutualCPUDeviceName, resource.DecimalSI)
+				devicesCap.Add(*devicesPerWorker)
+			}
+			// we want to make sure we exhaust all devices in the cluster,
+			// so we create replicas equal to the number of all devices plus some more
+			replicas := devicesCap.Size() + 10
+			dp := deployments.Make("dp-test", fixture.TestingNS.Name, deployments.WithPodSpec(pod.Spec), deployments.WithReplicas(replicas))
+			err = fixture.Cli.Create(fixture.Ctx, dp)
+			Expect(err).ToNot(HaveOccurred())
+
+			By("wait for device plugin to catch up and generate more devices")
+			Expect(wait.ForDeploymentReady(fixture.Ctx, fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
+		})
 	})
 
 	When("a pod gets request for shared cpu device", func() {
@@ -186,25 +210,7 @@ func createDeployment(name string) *appsv1.Deployment {
 		corev1.ResourceMemory:            resource.MustParse("100M"),
 		deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),
 	}))
-	labelsMap := map[string]string{"name": name}
-	dp := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: fixture.TestingNS.Name,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labelsMap,
-			},
-			Replicas: pointer.Int32(1),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labelsMap,
-				},
-				Spec: pod.Spec,
-			},
-		},
-	}
+	dp := deployments.Make(name, fixture.TestingNS.Name, deployments.WithPodSpec(pod.Spec))
 	klog.Infof("create deployment %q with a pod requesting for shared cpus", client.ObjectKeyFromObject(dp).String())
 	ExpectWithOffset(1, fixture.Cli.Create(context.TODO(), dp)).ToNot(HaveOccurred(), "failed to create deployment %q", client.ObjectKeyFromObject(dp).String())
 	ExpectWithOffset(1, wait.ForDeploymentReady(fixture.Ctx, fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
