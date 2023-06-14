@@ -90,9 +90,10 @@ func ForDeploymentReady(ctx context.Context, c client.Client, key client.ObjectK
 	})
 
 	if err != nil {
-		ownedPods, err := pods.OwnedByDeployment(ctx, c, dp, &client.ListOptions{})
-		if err != nil {
-			return err
+		// do not override the original error
+		ownedPods, e := pods.OwnedByDeployment(ctx, c, dp, &client.ListOptions{})
+		if e != nil {
+			return e
 		}
 		return fmt.Errorf("failed wait for deployment %q to be ready. only %d/%d are ready;\n pods status: %s; %w",
 			key.String(), dp.Status.ReadyReplicas, dp.Status.Replicas, pods.PrintStatus(ownedPods), err)
