@@ -13,10 +13,10 @@ spec:
     spec:
       containers:
           - name: mixedcpus-plugin
-            image: quay.io/titzhak/mixedcpus
+            image: quay.io/titzhak/mixed-cpu-node-plugin
             imagePullPolicy: Always
             command:
-              - /bin/mixedcpus
+              - /bin/mixedcpu
             args:
               - --name=mixedcpus
               - --idx=99
