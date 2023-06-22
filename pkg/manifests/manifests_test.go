@@ -52,7 +52,7 @@ func TestSetSharedCPUs(t *testing.T) {
 		},
 	}
 	for _, tc := range tcs {
-		mf, err := Get("", tc.cpus)
+		mf, err := Get(tc.cpus)
 		if !tc.IsError && err != nil {
 			t.Errorf("failed to get manifests %v", err)
 		}
@@ -85,7 +85,7 @@ func TestSetSharedCPUs(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	mf, err := Get("unit-test-ns", "0-3,5")
+	mf, err := Get("0-3,5", WithNewNamespace("unit-test-ns"))
 	if err != nil {
 		t.Errorf("failed to get manifests %v", err)
 	}
@@ -111,11 +111,25 @@ func TestGet(t *testing.T) {
 		t.Errorf("wrong namespace name %q", mf.NS.Name)
 	}
 
-	mf, err = Get("", "1,2,4")
+	mf, err = Get("1,2,4", WithNamespace("unit-test-12"))
 	if err != nil {
 		t.Errorf("failed to get manifests %v", err)
 	}
 	if !reflect.DeepEqual(mf.NS, corev1.Namespace{}) {
-		t.Errorf("should have an empty namespace when specified ns is \"\"")
+		t.Errorf("should have an empty namespace when WithNamespace called")
+	}
+	if mf.DS.Namespace != "unit-test-12" {
+		t.Errorf("%q object namespace not set", mf.DS.Kind)
+	}
+
+	mf, err = Get("1,2,4")
+	if err != nil {
+		t.Errorf("failed to get manifests %v", err)
+	}
+	if !reflect.DeepEqual(mf.NS, corev1.Namespace{}) {
+		t.Errorf("should have an empty namespace when WithNamespace called")
+	}
+	if mf.DS.Namespace != "" {
+		t.Errorf("%q object namespace should be set to default", mf.DS.Kind)
 	}
 }

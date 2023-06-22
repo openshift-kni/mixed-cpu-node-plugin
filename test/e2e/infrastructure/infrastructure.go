@@ -85,7 +85,7 @@ func setup(ctx context.Context, c client.Client, ns string) error {
 		return err
 	}
 
-	mf, err := manifests.Get(ns, e2econfig.SharedCPUs())
+	mf, err := manifests.Get(e2econfig.SharedCPUs(), manifests.WithNewNamespace(ns))
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func setup(ctx context.Context, c client.Client, ns string) error {
 }
 
 func teardown(ctx context.Context, c client.Client, ns string) error {
-	mf, err := manifests.Get(ns, e2econfig.SharedCPUs())
+	mf, err := manifests.Get(e2econfig.SharedCPUs(), manifests.WithNewNamespace(ns))
 	if err != nil {
 		return err
 	}

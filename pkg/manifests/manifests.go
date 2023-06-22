@@ -45,7 +45,7 @@ type Manifests struct {
 	SCC  securityv1.SecurityContextConstraints
 }
 
-func Get(ns string, sharedCPUs string) (*Manifests, error) {
+func Get(sharedCPUs string, opts ...func(mf *Manifests)) (*Manifests, error) {
 	mf := Manifests{}
 	var fileToObject = map[string]metav1.Object{
 		"serviceaccount.yaml":            &mf.SA,
@@ -74,16 +74,13 @@ func Get(ns string, sharedCPUs string) (*Manifests, error) {
 		}
 	}
 
-	if ns != "" {
-		mf.NS = corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: ns,
-			},
-		}
-		mf.DS.Namespace = ns
-		mf.Role.Namespace = ns
-		mf.RB.Namespace = ns
-		mf.SA.Namespace = ns
+	// by default, set the namespace to default namespace.
+	// the default namespace can be changed via Optional Parameter Function
+	f := WithNamespace("")
+	f(&mf)
+
+	for _, opt := range opts {
+		opt(&mf)
 	}
 
 	mf.SCC.Users = []string{
@@ -95,15 +92,40 @@ func Get(ns string, sharedCPUs string) (*Manifests, error) {
 	return &mf, nil
 }
 
+// WithNewNamespace creates new namespace and updates the objects
+func WithNewNamespace(ns string) func(mf *Manifests) {
+	return func(mf *Manifests) {
+		mf.NS = corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		}
+		f := WithNamespace(ns)
+		f(mf)
+	}
+}
+
+func WithNamespace(ns string) func(mf *Manifests) {
+	return func(mf *Manifests) {
+		mf.DS.Namespace = ns
+		mf.Role.Namespace = ns
+		mf.RB.Namespace = ns
+		mf.SA.Namespace = ns
+	}
+}
+
 func (mf *Manifests) ToObjects() []client.Object {
-	return []client.Object{
-		&mf.NS,
+	objs := make([]client.Object, 0)
+	if mf.NS.Name != "" {
+		objs = append(objs, &mf.NS)
+	}
+	return append(objs,
 		&mf.DS,
 		&mf.Role,
 		&mf.RB,
 		&mf.SA,
 		&mf.SCC,
-	}
+	)
 }
 
 // SetSharedCPUs updates the container args under the
