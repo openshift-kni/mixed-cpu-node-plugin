@@ -111,6 +111,18 @@ func WithNamespace(ns string) func(mf *Manifests) {
 		mf.Role.Namespace = ns
 		mf.RB.Namespace = ns
 		mf.SA.Namespace = ns
+		// SCC is cluster scoped
+	}
+}
+
+func WithName(name string) func(mf *Manifests) {
+	return func(mf *Manifests) {
+		mf.DS.Name = name
+		mf.Role.Name = name
+		mf.SA.Name = name
+		mf.RB.Name = name
+		mf.RB.RoleRef.Name = mf.Role.Name
+		mf.SCC.Name = name
 	}
 }
 

@@ -132,4 +132,12 @@ func TestGet(t *testing.T) {
 	if mf.DS.Namespace != "" {
 		t.Errorf("%q object namespace should be set to default", mf.DS.Kind)
 	}
+
+	mf, err = Get("1,2,4", WithName("foo"))
+	if err != nil {
+		t.Errorf("failed to get manifests %v", err)
+	}
+	if mf.DS.Name != "foo" {
+		t.Errorf("%q object name should be equal to foo", mf.DS.Kind)
+	}
 }
