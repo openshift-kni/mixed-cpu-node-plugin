@@ -3,6 +3,8 @@ package nodes
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,4 +47,19 @@ func ExecCommand(ctx context.Context, kc *kubernetes.Clientset, nodeName string,
 	}
 
 	return pods.Exec(kc, mcd, command)
+}
+
+func GetWorkers(ctx context.Context, c client.Client) ([]corev1.Node, error) {
+	workerRoleLabel := "node-role.kubernetes.io/worker="
+	selector, err := labels.Parse(workerRoleLabel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse %q into selector", workerRoleLabel)
+	}
+	opts := &client.ListOptions{LabelSelector: selector}
+	nodeList := &corev1.NodeList{}
+	err = c.List(ctx, nodeList, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list worker nodes; %w", err)
+	}
+	return nodeList.Items, nil
 }

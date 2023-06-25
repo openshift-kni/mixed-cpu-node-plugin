@@ -74,7 +74,7 @@ func ForDSReady(ctx context.Context, c client.Client, key client.ObjectKey) erro
 
 func ForDeploymentReady(ctx context.Context, c client.Client, key client.ObjectKey) error {
 	dp := &appsv1.Deployment{}
-	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 2*time.Minute, true, func(ctx context.Context) (bool, error) {
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		err := c.Get(ctx, key, dp)
 		if err != nil {
 			return false, fmt.Errorf("failed to get deployment %q; %w", key.String(), err)
