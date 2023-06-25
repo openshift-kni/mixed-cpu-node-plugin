@@ -83,9 +83,8 @@ func Get(sharedCPUs string, opts ...func(mf *Manifests)) (*Manifests, error) {
 		opt(&mf)
 	}
 
-	mf.SCC.Users = []string{
-		fmt.Sprintf("system:serviceaccount:%s:%s", mf.SA.Namespace, mf.SA.Name),
-	}
+	updateServiceAccountInfo(&mf)
+
 	if err := mf.SetSharedCPUs(sharedCPUs); err != nil {
 		return nil, err
 	}
@@ -111,7 +110,6 @@ func WithNamespace(ns string) func(mf *Manifests) {
 		mf.Role.Namespace = ns
 		mf.RB.Namespace = ns
 		mf.SA.Namespace = ns
-		// SCC is cluster scoped
 	}
 }
 
@@ -160,4 +158,21 @@ func (mf *Manifests) SetSharedCPUs(cpus string) error {
 	newArgs = append(newArgs, fmt.Sprintf("--mutual-cpus=%s", set.String()))
 	cnt.Args = newArgs
 	return nil
+}
+
+func updateServiceAccountInfo(mf *Manifests) {
+	saName := mf.SA.Name
+	saNS := mf.SA.Namespace
+
+	mf.DS.Spec.Template.Spec.ServiceAccountName = saName
+	mf.RB.Subjects[0].Namespace = saNS
+	mf.RB.Subjects[0].Name = saNS
+
+	sa := saName
+	if saNS != "" {
+		sa = saNS + ":" + saName
+	}
+	mf.SCC.Users = []string{
+		fmt.Sprintf("system:serviceaccount:%s", sa),
+	}
 }
