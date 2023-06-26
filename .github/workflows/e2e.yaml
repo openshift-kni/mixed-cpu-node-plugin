@@ -15,8 +15,8 @@ defaults:
     shell: bash
 
 jobs:
-  e2e-ic:
-    runs-on: ubuntu-20.04
+  e2e-ci:
+    runs-on: ubuntu-latest
     env:
       MIXED_CPUS_CONTAINER_IMAGE: quay.io/titzhak/mixedcpus:ci
       RUNTIME: docker
@@ -57,7 +57,7 @@ jobs:
           # kind image used for this setup is under the config.yaml file
           kind create cluster --config=test/kind/config.yaml
           kind load docker-image ${MIXED_CPUS_CONTAINER_IMAGE}
-
+          
       - name: label workers
         run: |
           kubectl label node kind-worker kind-worker2 node-role.kubernetes.io/worker=""
