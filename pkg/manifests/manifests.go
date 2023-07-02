@@ -166,7 +166,7 @@ func updateServiceAccountInfo(mf *Manifests) {
 
 	mf.DS.Spec.Template.Spec.ServiceAccountName = saName
 	mf.RB.Subjects[0].Namespace = saNS
-	mf.RB.Subjects[0].Name = saNS
+	mf.RB.Subjects[0].Name = saName
 
 	sa := saName
 	if saNS != "" {

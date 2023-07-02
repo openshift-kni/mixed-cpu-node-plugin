@@ -140,4 +140,10 @@ func TestGet(t *testing.T) {
 	if mf.DS.Name != "foo" {
 		t.Errorf("%q object name should be equal to foo", mf.DS.Kind)
 	}
+	if mf.RB.Subjects[0].Name != mf.SA.Name {
+		t.Errorf("%q -> subject[0] -> name should be equal to %s", mf.RB.Kind, mf.SA.Name)
+	}
+	if mf.RB.Subjects[0].Namespace != mf.SA.Namespace {
+		t.Errorf("%q -> subject[0] -> namespace should be equal to %s", mf.RB.Kind, mf.SA.Namespace)
+	}
 }
