@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package e2e_test
+package mixedcpus
 
 import (
 	"context"
@@ -48,19 +48,19 @@ const (
 
 var _ = Describe("Mixedcpus", func() {
 	BeforeEach(func() {
-		ns, err := createNamespace("mixedcpus-testing-")
+		ns, err := e2e.createNamespace("mixedcpus-testing-")
 		Expect(err).ToNot(HaveOccurred())
-		fixture.TestingNS = ns
-		DeferCleanup(deleteNamespace, fixture.TestingNS)
+		e2e.fixture.TestingNS = ns
+		DeferCleanup(e2e.deleteNamespace, e2e.fixture.TestingNS)
 	})
 
 	Context("requests more devices than node has", func() {
 		It("should generate more devices", func() {
 			By("create deployment which asks more devices than the node has")
-			pod := pods.Make("pod-test", fixture.TestingNS.Name, pods.WithLimits(corev1.ResourceList{
+			pod := pods.Make("pod-test", e2e.fixture.TestingNS.Name, pods.WithLimits(corev1.ResourceList{
 				deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),
 			}))
-			workers, err := nodes.GetWorkers(fixture.Ctx, fixture.Cli)
+			workers, err := nodes.GetWorkers(e2e.fixture.Ctx, e2e.fixture.Cli)
 			Expect(err).ToNot(HaveOccurred())
 			var devicesCap resource.Quantity
 			for _, worker := range workers {
@@ -70,12 +70,12 @@ var _ = Describe("Mixedcpus", func() {
 			// we want to make sure we exhaust all devices in the cluster,
 			// so we create replicas equal to the number of all devices plus some more
 			replicas := devicesCap.Size() + 10
-			dp := deployments.Make("dp-test", fixture.TestingNS.Name, deployments.WithPodSpec(pod.Spec), deployments.WithReplicas(replicas))
-			err = fixture.Cli.Create(fixture.Ctx, dp)
+			dp := deployments.Make("dp-test", e2e.fixture.TestingNS.Name, deployments.WithPodSpec(pod.Spec), deployments.WithReplicas(replicas))
+			err = e2e.fixture.Cli.Create(e2e.fixture.Ctx, dp)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("wait for device plugin to catch up and generate more devices")
-			Expect(wait.ForDeploymentReady(fixture.Ctx, fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
+			Expect(wait.ForDeploymentReady(e2e.fixture.Ctx, e2e.fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
 		})
 	})
 
@@ -85,7 +85,7 @@ var _ = Describe("Mixedcpus", func() {
 		BeforeEach(func() {
 			checkMinimalCPUsForTesting()
 			dp = createDeployment("dp-test")
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp, &client.ListOptions{})
+			items, err := pods.OwnedByDeployment(e2e.fixture.Ctx, e2e.fixture.Cli, dp, &client.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			replicas := int(*dp.Spec.Replicas)
 			Expect(len(items)).To(Equal(replicas), "expected to find %d pods for deployment=%q found %d; %v", replicas, dp.Name, len(items), items)
@@ -93,7 +93,7 @@ var _ = Describe("Mixedcpus", func() {
 		})
 
 		It("should contain the shared cpus under its cgroups", func() {
-			cpus, err := pods.GetAllowedCPUs(fixture.K8SCli, pod)
+			cpus, err := pods.GetAllowedCPUs(e2e.fixture.K8SCli, pod)
 			Expect(err).ToNot(HaveOccurred())
 
 			sharedCpus := e2econfig.SharedCPUs()
@@ -107,14 +107,14 @@ var _ = Describe("Mixedcpus", func() {
 
 		It("can have more than one pod accessing shared cpus", func() {
 			dp2 := createDeployment("dp-test2")
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp2, &client.ListOptions{})
+			items, err := pods.OwnedByDeployment(e2e.fixture.Ctx, e2e.fixture.Cli, dp2, &client.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			replicas := int(*dp2.Spec.Replicas)
 			Expect(len(items)).To(Equal(replicas), "expected to find %d pods for deployment=%q found %d; %+v", replicas, dp2.Name, len(items), items)
 			pod2 := &items[0]
 
 			By("check the second pod successfully deployed with shared cpus")
-			cpus, err := pods.GetAllowedCPUs(fixture.K8SCli, pod2)
+			cpus, err := pods.GetAllowedCPUs(e2e.fixture.K8SCli, pod2)
 			Expect(err).ToNot(HaveOccurred())
 
 			sharedCpus := e2econfig.SharedCPUs()
@@ -131,7 +131,7 @@ var _ = Describe("Mixedcpus", func() {
 			Expect(sharedCpus).ToNot(BeEmpty())
 
 			sharedCpusSet := e2ecpuset.MustParse(sharedCpus)
-			out, err := pods.Exec(fixture.K8SCli, pod, []string{"/bin/printenv", "OPENSHIFT_MUTUAL_CPUS"})
+			out, err := pods.Exec(e2e.fixture.K8SCli, pod, []string{"/bin/printenv", "OPENSHIFT_MUTUAL_CPUS"})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).ToNot(BeEmpty(), "OPENSHIFT_MUTUAL_CPUS environment variable was not found")
 
@@ -148,7 +148,7 @@ var _ = Describe("Mixedcpus", func() {
 		BeforeEach(func() {
 			checkMinimalCPUsForTesting()
 			dp = createDeployment("dp-test")
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp, &client.ListOptions{})
+			items, err := pods.OwnedByDeployment(e2e.fixture.Ctx, e2e.fixture.Cli, dp, &client.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(items)).To(Equal(int(*dp.Spec.Replicas)), "expected to find %d pods for deployment=%q found %d; %+v", int(*dp.Spec.Replicas), dp.Name, len(items), items)
 			pod = &items[0]
@@ -157,12 +157,12 @@ var _ = Describe("Mixedcpus", func() {
 		It("should have all pods with shared cpus running after it goes back up", func() {
 			nodeName := pod.Spec.NodeName
 			By(fmt.Sprintf("call reboot on node %q", nodeName))
-			_, err := nodes.ExecCommand(fixture.Ctx, fixture.K8SCli, nodeName, []string{"chroot", "/rootfs", "systemctl", "reboot"})
+			_, err := nodes.ExecCommand(e2e.fixture.Ctx, e2e.fixture.K8SCli, nodeName, []string{"chroot", "/rootfs", "systemctl", "reboot"})
 			Expect(err).ToNot(HaveOccurred(), "failed to execute reboot on node %q", nodeName)
 			By(fmt.Sprintf("wait for node %q to be ready", nodeName))
-			Expect(wait.ForNodeReady(fixture.Ctx, fixture.Cli, client.ObjectKey{Name: nodeName})).ToNot(HaveOccurred())
+			Expect(wait.ForNodeReady(e2e.fixture.Ctx, e2e.fixture.Cli, client.ObjectKey{Name: nodeName})).ToNot(HaveOccurred())
 			By(fmt.Sprintf("node %q is ready, moving on with testing", nodeName))
-			Expect(wait.ForDeploymentReady(fixture.Ctx, fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
+			Expect(wait.ForDeploymentReady(e2e.fixture.Ctx, e2e.fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
 
 			By("check pod successfully deployed with shared cpus")
 			// After reboot, the pod might fail since the shared cpu device is not ready.
@@ -170,12 +170,12 @@ var _ = Describe("Mixedcpus", func() {
 			// We want to check only the healthy pod (i.e., non terminal), hence, we filter the terminal pods.
 			fieldSelector, err := fields.ParseSelector(pods.NonTerminalSelector)
 			Expect(err).ToNot(HaveOccurred(), "failed to parse FieldSelector=%q", pods.NonTerminalSelector)
-			items, err := pods.OwnedByDeployment(fixture.Ctx, fixture.Cli, dp, &client.ListOptions{FieldSelector: fieldSelector})
+			items, err := pods.OwnedByDeployment(e2e.fixture.Ctx, e2e.fixture.Cli, dp, &client.ListOptions{FieldSelector: fieldSelector})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(items)).To(Equal(int(*dp.Spec.Replicas)), "expected to find %d pods for deployment=%q found %d; %+v", int(*dp.Spec.Replicas), dp.Name, len(items), items)
 			pod = &items[0]
 
-			cpus, err := pods.GetAllowedCPUs(fixture.K8SCli, pod)
+			cpus, err := pods.GetAllowedCPUs(e2e.fixture.K8SCli, pod)
 			Expect(err).ToNot(HaveOccurred())
 
 			sharedCpus := e2econfig.SharedCPUs()
@@ -191,7 +191,7 @@ var _ = Describe("Mixedcpus", func() {
 
 func checkMinimalCPUsForTesting() {
 	nodeList := &corev1.NodeList{}
-	ExpectWithOffset(1, fixture.Cli.List(context.TODO(), nodeList)).ToNot(HaveOccurred())
+	ExpectWithOffset(1, e2e.fixture.Cli.List(context.TODO(), nodeList)).ToNot(HaveOccurred())
 	var nodes []*corev1.Node
 	for i := 0; i < len(nodeList.Items); i++ {
 		node := &nodeList.Items[i]
@@ -200,19 +200,19 @@ func checkMinimalCPUsForTesting() {
 		}
 	}
 	if len(nodes) < minimalNodesForTesting {
-		Skipf("minimum of %d nodes with minimum of %d cpus are needed", minimalNodesForTesting, minimalCPUsForTesting)
+		e2e.Skipf("minimum of %d nodes with minimum of %d cpus are needed", minimalNodesForTesting, minimalCPUsForTesting)
 	}
 }
 
 func createDeployment(name string) *appsv1.Deployment {
-	pod := pods.Make("pod-test", fixture.TestingNS.Name, pods.WithLimits(corev1.ResourceList{
+	pod := pods.Make("pod-test", e2e.fixture.TestingNS.Name, pods.WithLimits(corev1.ResourceList{
 		corev1.ResourceCPU:               resource.MustParse("1"),
 		corev1.ResourceMemory:            resource.MustParse("100M"),
 		deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),
 	}))
-	dp := deployments.Make(name, fixture.TestingNS.Name, deployments.WithPodSpec(pod.Spec))
+	dp := deployments.Make(name, e2e.fixture.TestingNS.Name, deployments.WithPodSpec(pod.Spec))
 	klog.Infof("create deployment %q with a pod requesting for shared cpus", client.ObjectKeyFromObject(dp).String())
-	ExpectWithOffset(1, fixture.Cli.Create(context.TODO(), dp)).ToNot(HaveOccurred(), "failed to create deployment %q", client.ObjectKeyFromObject(dp).String())
-	ExpectWithOffset(1, wait.ForDeploymentReady(fixture.Ctx, fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
+	ExpectWithOffset(1, e2e.fixture.Cli.Create(context.TODO(), dp)).ToNot(HaveOccurred(), "failed to create deployment %q", client.ObjectKeyFromObject(dp).String())
+	ExpectWithOffset(1, wait.ForDeploymentReady(e2e.fixture.Ctx, e2e.fixture.Cli, client.ObjectKeyFromObject(dp))).ToNot(HaveOccurred())
 	return dp
 }
