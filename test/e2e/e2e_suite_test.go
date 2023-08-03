@@ -25,6 +25,7 @@ import (
 
 	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/fixture"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/infrastructure"
+	_ "github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/mixedcpus"
 )
 
 const defaultNamespaceName = "e2e-mixed-cpu-node-plugin"
