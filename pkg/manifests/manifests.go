@@ -70,7 +70,7 @@ func Get(sharedCPUs string, opts ...func(mf *Manifests)) (*Manifests, error) {
 			return nil, fmt.Errorf("key %q does not exist", f.Name())
 		}
 		if err := yaml.Unmarshal(data, fileToObject[f.Name()]); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal file %q: %w", "bla", err)
+			return nil, fmt.Errorf("failed to unmarshal file %q: %w", f.Name(), err)
 		}
 	}
 
