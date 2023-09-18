@@ -19,6 +19,7 @@ package mixedcpus
 import (
 	"context"
 	"fmt"
+	"github.com/openshift-kni/mixed-cpu-node-plugin/pkg/nriplugin"
 	"github.com/openshift-kni/mixed-cpu-node-plugin/test/e2e/fixture"
 	"strings"
 
@@ -140,6 +141,18 @@ var _ = Describe("Mixedcpus", func() {
 			sharedCpusFromEnv, err := cpuset.Parse(envVar)
 			Expect(err).ToNot(HaveOccurred(), "failed parse %q to cpuset", sharedCpusFromEnv)
 			Expect(sharedCpusSet.Equals(sharedCpusFromEnv)).To(BeTrue())
+		})
+
+		It("should contain OPENSHIFT_ISOLATED_CPUS environment variable", func() {
+			isolatedCpusSet := e2ecpuset.MustParse(pod.Spec.Containers[0].Resources.Requests.Cpu().String())
+			out, err := pods.Exec(fxt.K8SCli, pod, []string{"/bin/printenv", nriplugin.IsolatedCPUsEnvVar})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).ToNot(BeEmpty(), "%s environment variable was not found", nriplugin.IsolatedCPUsEnvVar)
+
+			envVar := strings.Trim(string(out), "\r\n")
+			isolaredCpusFromEnv, err := cpuset.Parse(envVar)
+			Expect(err).ToNot(HaveOccurred(), "failed parse %q to cpuset", isolaredCpusFromEnv)
+			Expect(isolatedCpusSet.Equals(isolaredCpusFromEnv)).To(BeTrue())
 		})
 	})
 
