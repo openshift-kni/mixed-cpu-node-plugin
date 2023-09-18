@@ -31,7 +31,8 @@ import (
 )
 
 const (
-	milliCPUToCPU = 1000
+	IsolatedCPUsEnvVar = "OPENSHIFT_ISOLATED_CPUS"
+	milliCPUToCPU      = 1000
 )
 
 // Plugin nriplugin for mixed cpus
@@ -81,6 +82,12 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 		return adjustment, updates, nil
 	}
 	uniqueName := getCtrUniqueName(pod, ctr)
+	env := api.KeyValue{
+		Key:   IsolatedCPUsEnvVar,
+		Value: ctr.Linux.Resources.Cpu.Cpus,
+	}
+	adjustment.Env = []*api.KeyValue{&env}
+
 	glog.Infof("append mutual cpus to container %q", uniqueName)
 	err := setMutualCPUs(ctr, p.MutualCPUs, uniqueName)
 	if err != nil {

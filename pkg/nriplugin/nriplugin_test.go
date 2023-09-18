@@ -71,6 +71,9 @@ func TestCreateContainer(t *testing.T) {
 				if tc.quota != lcpu.Quota.Value {
 					t.Fatalf("unexpected quota; want: %q, got: %q", tc.quota, lcpu.Quota.Value)
 				}
+				if ca.Env[0].Key != IsolatedCPUsEnvVar || ca.Env[0].Value != tc.cpuset {
+					t.Fatalf("failed to set isolated cpu env var: want: %q, got: %q", tc.cpuset, ca.Env[0].Value)
+				}
 			} else {
 				if ca.Linux != nil {
 					t.Fatalf("expected api.LinuxContainerAdjustment response to be nil")
