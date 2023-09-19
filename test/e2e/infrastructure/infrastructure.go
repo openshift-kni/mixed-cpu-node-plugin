@@ -180,4 +180,5 @@ func updateOpenshiftConfig(mf *manifests.Manifests) {
 	podSpec.Containers[0].SecurityContext = &corev1.SecurityContext{
 		Privileged: pointer.Bool(true),
 	}
+	podSpec.Containers[0].Image = e2econfig.Image()
 }
