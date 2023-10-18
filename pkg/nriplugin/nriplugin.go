@@ -37,13 +37,13 @@ const (
 // Plugin nriplugin for mixed cpus
 type Plugin struct {
 	Stub       stub.Stub
-	MutualCPUs *cpuset.CPUSet
+	SharedCPUs *cpuset.CPUSet
 }
 
 type Args struct {
 	PluginName string
 	PluginIdx  string
-	MutualCPUs string
+	SharedCPUs string
 }
 
 func New(args *Args) (*Plugin, error) {
@@ -56,15 +56,15 @@ func New(args *Args) (*Plugin, error) {
 	if args.PluginIdx != "" {
 		opts = append(opts, stub.WithPluginIdx(args.PluginIdx))
 	}
-	c, err := cpuset.Parse(args.MutualCPUs)
+	c, err := cpuset.Parse(args.SharedCPUs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse cpuset %q: %w", args.MutualCPUs, err)
+		return nil, fmt.Errorf("failed to parse cpuset %q: %w", args.SharedCPUs, err)
 	}
 	if c.Size() == 0 {
-		return p, fmt.Errorf("there has to be at least one mutual CPU")
+		return p, fmt.Errorf("there has to be at least one shared CPU")
 	}
-	glog.Infof("node %q mutual CPUs: %q", os.ExpandEnv("$NODE_NAME"), c.String())
-	p.MutualCPUs = &c
+	glog.Infof("node %q shared CPUs: %q", os.ExpandEnv("$NODE_NAME"), c.String())
+	p.SharedCPUs = &c
 
 	if p.Stub, err = stub.New(p, opts...); err != nil {
 		return nil, fmt.Errorf("failed to create plugin stub: %w", err)
@@ -81,18 +81,18 @@ func (p *Plugin) CreateContainer(pod *api.PodSandbox, ctr *api.Container) (*api.
 		return adjustment, updates, nil
 	}
 	uniqueName := getCtrUniqueName(pod, ctr)
-	glog.Infof("append mutual cpus to container %q", uniqueName)
-	err := setMutualCPUs(ctr, p.MutualCPUs, uniqueName)
+	glog.Infof("append shared cpus to container %q", uniqueName)
+	err := setSharedCPUs(ctr, p.SharedCPUs, uniqueName)
 	if err != nil {
-		return adjustment, updates, fmt.Errorf("CreateContainer: setMutualCPUs failed: %w", err)
+		return adjustment, updates, fmt.Errorf("CreateContainer: setSharedCPUs failed: %w", err)
 	}
 
-	//Adding mutual cpus without increasing cpuQuota,
+	//Adding shared cpus without increasing cpuQuota,
 	//might result with throttling the processes' threads
-	//if the threads that are running under the mutual cpus
+	//if the threads that are running under the shared cpus
 	//oversteps their boundaries, or the threads that are running
 	//under the reserved cpus consumes the cpuQuota (pretty common in dpdk/latency sensitive applications).
-	//Since we can't determine the cpuQuota for the mutual cpus
+	//Since we can't determine the cpuQuota for the shared cpus
 	//and avoid throttling the process is critical, increasing the cpuQuota to the maximum is the best option.
 	quota, err := calculateCFSQuota(ctr)
 	if err != nil {
@@ -149,7 +149,7 @@ func (p *Plugin) UpdateContainer(pod *api.PodSandbox, ctr *api.Container) ([]*ap
 		return nil, fmt.Errorf("failed to parse container %q cpuset %w", ctr.Id, err)
 	}
 	// bypass updates coming from CPUManager
-	ctr.Linux.Resources.Cpu.Cpus = curCpus.Union(*p.MutualCPUs).String()
+	ctr.Linux.Resources.Cpu.Cpus = curCpus.Union(*p.SharedCPUs).String()
 	quota, err := calculateCFSQuota(ctr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate CFS quota: %w", err)
@@ -167,7 +167,7 @@ func (p *Plugin) UpdateContainer(pod *api.PodSandbox, ctr *api.Container) ([]*ap
 	return updates, nil
 }
 
-func setMutualCPUs(ctr *api.Container, mutualCPUs *cpuset.CPUSet, uniqueName string) error {
+func setSharedCPUs(ctr *api.Container, sharedCPUs *cpuset.CPUSet, uniqueName string) error {
 	lspec := ctr.GetLinux()
 	if lspec == nil ||
 		lspec.Resources == nil ||
@@ -177,13 +177,13 @@ func setMutualCPUs(ctr *api.Container, mutualCPUs *cpuset.CPUSet, uniqueName str
 	}
 	ctrCpus := lspec.Resources.Cpu
 	curCpus, err := cpuset.Parse(ctrCpus.Cpus)
-	glog.V(4).Infof("container %q cpus ids before applying mutual cpus %q", uniqueName, curCpus.String())
+	glog.V(4).Infof("container %q cpus ids before applying shared cpus %q", uniqueName, curCpus.String())
 	if err != nil {
 		return err
 	}
 
-	ctrCpus.Cpus = curCpus.Union(*mutualCPUs).String()
-	glog.V(4).Infof("container %q cpus ids after applying mutual cpus %q", uniqueName, ctrCpus.Cpus)
+	ctrCpus.Cpus = curCpus.Union(*sharedCPUs).String()
+	glog.V(4).Infof("container %q cpus ids after applying shared cpus %q", uniqueName, ctrCpus.Cpus)
 	return nil
 }
 

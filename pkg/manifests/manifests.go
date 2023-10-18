@@ -139,7 +139,7 @@ func (mf *Manifests) ToObjects() []client.Object {
 }
 
 // SetSharedCPUs updates the container args under the
-// DaemonSet with a --mutual-cpus value.
+// DaemonSet with a --shared-cpus value.
 // It returns an error if the cpus are not a valid cpu set.
 func (mf *Manifests) SetSharedCPUs(cpus string) error {
 	set, err := cpuset.Parse(cpus)
@@ -150,12 +150,12 @@ func (mf *Manifests) SetSharedCPUs(cpus string) error {
 	var newArgs []string
 	for _, arg := range cnt.Args {
 		keyAndValue := strings.Split(arg, "=")
-		if keyAndValue[0] == "--mutual-cpus" {
+		if keyAndValue[0] == "--shared-cpus" {
 			continue
 		}
 		newArgs = append(newArgs, arg)
 	}
-	newArgs = append(newArgs, fmt.Sprintf("--mutual-cpus=%s", set.String()))
+	newArgs = append(newArgs, fmt.Sprintf("--shared-cpus=%s", set.String()))
 	cnt.Args = newArgs
 	return nil
 }

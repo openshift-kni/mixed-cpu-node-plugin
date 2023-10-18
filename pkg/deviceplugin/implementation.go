@@ -41,7 +41,7 @@ type message struct {
 }
 
 type pluginImp struct {
-	mutualCpus       *cpuset.CPUSet
+	sharedCpus       *cpuset.CPUSet
 	update           chan message
 	allocatedDevices int
 }
@@ -61,7 +61,7 @@ func (p pluginImp) ListAndWatch(empty *pluginapi.Empty, server pluginapi.DeviceP
 		u := <-p.update
 		p.allocatedDevices += u.requestedDevices
 		if p.allocatedDevices > devicesLimit {
-			glog.V(2).Infof("Warning: device limit has reached. can not populate more %q makeDevices", MutualCPUDeviceName)
+			glog.V(2).Infof("Warning: device limit has reached. can not populate more %q makeDevices", SharedCPUDeviceName)
 			continue
 		}
 		// check if more makeDevices are needed
@@ -88,7 +88,7 @@ func (p pluginImp) Allocate(ctx context.Context, request *pluginapi.AllocateRequ
 	glog.V(4).Infof("Allocate called with %+v", request)
 	for range request.ContainerRequests {
 		containerResponse := &pluginapi.ContainerAllocateResponse{
-			Envs: map[string]string{"OPENSHIFT_MUTUAL_CPUS": p.mutualCpus.String()},
+			Envs: map[string]string{"OPENSHIFT_SHARED_CPUS": p.sharedCpus.String()},
 		}
 		response.ContainerResponses = append(response.ContainerResponses, containerResponse)
 	}

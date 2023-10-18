@@ -67,7 +67,7 @@ func TestSetSharedCPUs(t *testing.T) {
 		cnt := &mf.DS.Spec.Template.Spec.Containers[0]
 		for _, arg := range cnt.Args {
 			keyAndValue := strings.Split(arg, "=")
-			if keyAndValue[0] == "--mutual-cpus" {
+			if keyAndValue[0] == "--shared-cpus" {
 				// we know the format is correct, otherwise Get() would return with an error
 				gotCPUset, _ = cpuset.Parse(keyAndValue[1])
 				break

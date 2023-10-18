@@ -59,13 +59,13 @@ var _ = Describe("Mixedcpus", func() {
 		It("should generate more devices", func() {
 			By("create deployment which asks more devices than the node has")
 			pod := pods.Make("pod-test", fxt.NS.Name, pods.WithLimits(corev1.ResourceList{
-				deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),
+				deviceplugin.SharedCPUDeviceName: resource.MustParse("1"),
 			}))
 			workers, err := nodes.GetWorkers(fxt.Ctx, fxt.Cli)
 			Expect(err).ToNot(HaveOccurred())
 			var devicesCap resource.Quantity
 			for _, worker := range workers {
-				devicesPerWorker := worker.Status.Capacity.Name(deviceplugin.MutualCPUDeviceName, resource.DecimalSI)
+				devicesPerWorker := worker.Status.Capacity.Name(deviceplugin.SharedCPUDeviceName, resource.DecimalSI)
 				devicesCap.Add(*devicesPerWorker)
 			}
 			// we want to make sure we exhaust all devices in the cluster,
@@ -127,14 +127,14 @@ var _ = Describe("Mixedcpus", func() {
 			Expect(intersect.Equals(sharedCpusSet)).To(BeTrue(), "shared cpu ids: %s, are not presented. pod: %v cpu ids are: %s", sharedCpusSet.String(), fmt.Sprintf("%s/%s", pod2.Namespace, pod2.Name), cpus.String())
 		})
 
-		It("should contain OPENSHIFT_MUTUAL_CPUS environment variable", func() {
+		It("should contain OPENSHIFT_SHARED_CPUS environment variable", func() {
 			sharedCpus := e2econfig.SharedCPUs()
 			Expect(sharedCpus).ToNot(BeEmpty())
 
 			sharedCpusSet := e2ecpuset.MustParse(sharedCpus)
-			out, err := pods.Exec(fxt.K8SCli, pod, []string{"/bin/printenv", "OPENSHIFT_MUTUAL_CPUS"})
+			out, err := pods.Exec(fxt.K8SCli, pod, []string{"/bin/printenv", "OPENSHIFT_SHARED_CPUS"})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(out).ToNot(BeEmpty(), "OPENSHIFT_MUTUAL_CPUS environment variable was not found")
+			Expect(out).ToNot(BeEmpty(), "OPENSHIFT_SHARED_CPUS environment variable was not found")
 
 			envVar := strings.Trim(string(out), "\r\n")
 			sharedCpusFromEnv, err := cpuset.Parse(envVar)
@@ -209,7 +209,7 @@ func createDeployment(cli client.Client, ns, name string) *appsv1.Deployment {
 	pod := pods.Make("pod-test", ns, pods.WithLimits(corev1.ResourceList{
 		corev1.ResourceCPU:               resource.MustParse("1"),
 		corev1.ResourceMemory:            resource.MustParse("100M"),
-		deviceplugin.MutualCPUDeviceName: resource.MustParse("1"),
+		deviceplugin.SharedCPUDeviceName: resource.MustParse("1"),
 	}))
 	dp := deployments.Make(name, ns, deployments.WithPodSpec(pod.Spec))
 	klog.Infof("create deployment %q with a pod requesting for shared cpus", client.ObjectKeyFromObject(dp).String())

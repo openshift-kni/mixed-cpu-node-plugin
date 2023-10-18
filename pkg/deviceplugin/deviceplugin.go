@@ -26,37 +26,37 @@ import (
 )
 
 const (
-	MutualCPUResourceNamespace = "openshift.io"
-	MutualCPUResourceName      = "mutualcpu"
-	MutualCPUDeviceName        = MutualCPUResourceNamespace + "/" + MutualCPUResourceName
-	EnvVarName                 = "OPENSHIFT_MUTUAL_CPUS"
+	SharedCPUResourceNamespace = "openshift.io"
+	SharedCPUResourceName      = "sharedcpu"
+	SharedCPUDeviceName        = SharedCPUResourceNamespace + "/" + SharedCPUResourceName
+	EnvVarName                 = "OPENSHIFT_SHARED_CPUS"
 )
 
-type MutualCpu struct {
+type SharedCpu struct {
 	cpus cpuset.CPUSet
 }
 
-func (mc *MutualCpu) GetResourceNamespace() string {
-	return MutualCPUResourceNamespace
+func (mc *SharedCpu) GetResourceNamespace() string {
+	return SharedCPUResourceNamespace
 }
 
-func (mc *MutualCpu) Discover(pnl chan dpm.PluginNameList) {
-	pnl <- []string{MutualCPUResourceName}
+func (mc *SharedCpu) Discover(pnl chan dpm.PluginNameList) {
+	pnl <- []string{SharedCPUResourceName}
 }
 
-func (mc *MutualCpu) NewPlugin(s string) dpm.PluginInterface {
+func (mc *SharedCpu) NewPlugin(s string) dpm.PluginInterface {
 	return pluginImp{
-		mutualCpus: &mc.cpus,
+		sharedCpus: &mc.cpus,
 		update:     make(chan message),
 	}
 }
 
 func New(cpus string) (*dpm.Manager, error) {
-	mutualCpus, err := cpuset.Parse(cpus)
+	sharedCpus, err := cpuset.Parse(cpus)
 	if err != nil {
 		return nil, err
 	}
-	mc := &MutualCpu{cpus: mutualCpus}
+	mc := &SharedCpu{cpus: sharedCpus}
 	return dpm.NewManager(mc), nil
 }
 

@@ -34,7 +34,7 @@ func main() {
 		glog.Fatalf("%v", err)
 	}
 
-	dp, err := deviceplugin.New(args.MutualCPUs)
+	dp, err := deviceplugin.New(args.SharedCPUs)
 	if err != nil {
 		glog.Fatalf("%v", err)
 	}
@@ -46,7 +46,7 @@ func parseArgs() *nriplugin.Args {
 	args := &nriplugin.Args{}
 	flag.StringVar(&args.PluginName, "name", "", "plugin name to register to NRI")
 	flag.StringVar(&args.PluginIdx, "idx", "", "plugin index to register to NRI")
-	flag.StringVar(&args.MutualCPUs, "mutual-cpus", "", "mutual cpus list")
+	flag.StringVar(&args.SharedCPUs, "shared-cpus", "", "shared cpus list")
 	flag.Parse()
 	return args
 }

@@ -35,7 +35,7 @@ const (
 func TestCreateContainer(t *testing.T) {
 	testCases := []struct {
 		name       string
-		mutualCPUs cpuset.CPUSet
+		sharedCPUs cpuset.CPUSet
 		sb         *api.PodSandbox
 		ctr        *api.Container
 		lres       *api.LinuxResources
@@ -44,7 +44,7 @@ func TestCreateContainer(t *testing.T) {
 	}{
 		{
 			name:       "pod without annotation",
-			mutualCPUs: e2ecpuset.MustParse(sampleCPUs),
+			sharedCPUs: e2ecpuset.MustParse(sampleCPUs),
 			sb:         makePodSandbox("test-sb"),
 			ctr:        makeContainer("test-ctr", withLinuxResources("1,2", 20000)),
 			lres:       nil,
@@ -57,7 +57,7 @@ func TestCreateContainer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			p := &Plugin{
 				Stub:       nil,
-				MutualCPUs: &tc.mutualCPUs,
+				SharedCPUs: &tc.sharedCPUs,
 			}
 			ca, _, err := p.CreateContainer(tc.sb, tc.ctr)
 			if err != nil {
