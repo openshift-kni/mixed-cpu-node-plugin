@@ -20,6 +20,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/klog/v2"
 	"os"
 	"strings"
 
@@ -183,4 +185,36 @@ func PrintStatus(pods []corev1.Pod) string {
 		podsInfo.WriteString(pod.Status.String() + "\n")
 	}
 	return podsInfo.String()
+}
+
+func GetEvents(ctx context.Context, c client.Client, namespace, name string) ([]corev1.Event, error) {
+	klog.Infof("checking events for Pod %s/%s", namespace, name)
+	s, err := fields.ParseSelector(fmt.Sprintf("involvedObject.name=%s", name))
+	if err != nil {
+		return nil, err
+	}
+	opts := &client.ListOptions{
+		FieldSelector: s,
+		Namespace:     namespace,
+	}
+	events := &corev1.EventList{}
+	err = c.List(ctx, events, opts)
+	if err != nil {
+		klog.ErrorS(err, "cannot get events for Pod %s/%s", namespace, name)
+		return nil, err
+	}
+	return events.Items, nil
+}
+
+func BySelector(ctx context.Context, c client.Client, selector *metav1.LabelSelector) ([]corev1.Pod, error) {
+	ls, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse selector %v; %w", selector.String(), err)
+	}
+	opts := &client.ListOptions{
+		LabelSelector: ls,
+	}
+	podList := &corev1.PodList{}
+	err = c.List(ctx, podList, opts)
+	return podList.Items, err
 }

@@ -145,8 +145,9 @@ var _ = Describe("Mixedcpus", func() {
 
 		It("should contain OPENSHIFT_ISOLATED_CPUS environment variable", func() {
 			isolatedCpusSet := e2ecpuset.MustParse(pod.Spec.Containers[0].Resources.Requests.Cpu().String())
-			out, err := pods.Exec(fxt.K8SCli, pod, []string{"/bin/printenv", nriplugin.IsolatedCPUsEnvVar})
+			out, err := pods.Exec(fxt.K8SCli, pod, []string{"/bin/printenv"})
 			Expect(err).ToNot(HaveOccurred())
+			klog.Infof("/bin/printenv %v", out)
 			Expect(out).ToNot(BeEmpty(), "%s environment variable was not found", nriplugin.IsolatedCPUsEnvVar)
 
 			envVar := strings.Trim(string(out), "\r\n")

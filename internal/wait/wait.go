@@ -3,6 +3,7 @@ package wait
 import (
 	"context"
 	"fmt"
+	"k8s.io/klog/v2"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -65,9 +66,20 @@ func ForDSReady(ctx context.Context, c client.Client, key client.ObjectKey) erro
 		}
 		return false, nil
 	})
-
 	if err != nil {
-		return fmt.Errorf("failed wait for daemonset %q to be ready. only %d/%d are ready; %w", key.String(), ds.Status.NumberReady, ds.Status.DesiredNumberScheduled, err)
+		podsOwnedByDs, localErr := pods.BySelector(ctx, c, ds.Spec.Selector)
+		if localErr != nil {
+			klog.ErrorS(localErr, "failed to list pods by selector", "selector", ds.Spec.Selector)
+		}
+		for _, p := range podsOwnedByDs {
+			events, localErr := pods.GetEvents(ctx, c, p.Namespace, p.Name)
+			if localErr != nil {
+				klog.ErrorS(localErr, "failed to get events for pod", "pod", client.ObjectKeyFromObject(&p).String())
+			} else {
+				klog.InfoS("events for pod", "pod", client.ObjectKeyFromObject(&p).String(), "events", events)
+			}
+		}
+		return fmt.Errorf("failed wait for daemonset %q to be ready. only %d/%d are ready; status: %v; %w", key.String(), ds.Status.NumberReady, ds.Status.DesiredNumberScheduled, ds.Status, err)
 	}
 	return nil
 }
