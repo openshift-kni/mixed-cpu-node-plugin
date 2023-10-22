@@ -17,9 +17,9 @@ spec:
             image: quay.io/titzhak/mixedcpus
             imagePullPolicy: Always
             command:
-              - /bin/mixedcpus
+              - /bin/mixedcpu
             args:
-              - --name=mixedcpus
+              - --name=mixedcpu
               - --idx=99
               - --v=4
               - --alsologtostderr
