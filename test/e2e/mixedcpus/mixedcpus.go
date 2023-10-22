@@ -147,7 +147,7 @@ var _ = Describe("Mixedcpus", func() {
 			isolatedCpusSet := e2ecpuset.MustParse(pod.Spec.Containers[0].Resources.Requests.Cpu().String())
 			out, err := pods.Exec(fxt.K8SCli, pod, []string{"/bin/printenv"})
 			Expect(err).ToNot(HaveOccurred())
-			klog.Infof("/bin/printenv %v", out)
+			klog.Infof("/bin/printenv %v", string(out))
 			Expect(out).ToNot(BeEmpty(), "%s environment variable was not found", nriplugin.IsolatedCPUsEnvVar)
 
 			envVar := strings.Trim(string(out), "\r\n")

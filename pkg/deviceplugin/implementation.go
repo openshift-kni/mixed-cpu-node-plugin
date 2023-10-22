@@ -88,7 +88,8 @@ func (p pluginImp) Allocate(ctx context.Context, request *pluginapi.AllocateRequ
 	glog.V(4).Infof("Allocate called with %+v", request)
 	for range request.ContainerRequests {
 		containerResponse := &pluginapi.ContainerAllocateResponse{
-			Envs: map[string]string{"OPENSHIFT_MUTUAL_CPUS": p.mutualCpus.String()},
+			Envs: map[string]string{"OPENSHIFT_MUTUAL_CPUS": p.mutualCpus.String(),
+				"TEST1": "TEST2"},
 		}
 		response.ContainerResponses = append(response.ContainerResponses, containerResponse)
 	}
