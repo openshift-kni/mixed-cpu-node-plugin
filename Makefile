@@ -169,6 +169,9 @@ test-unit:
 test-e2e: build-e2e
 	hack/e2e-run-test.sh $(E2E_SHARED_CPUS) $(E2E_SETUP) $(E2E_TEARDOWN)
 
+test-kustomize:
+	hack/test-kustomize.sh
+
 
 deps-update:
 	$(GO_CMD) mod tidy && $(GO_CMD) mod vendor
